@@ -5043,8 +5043,8 @@ int perturbations_vector_init(
 
 
       /* -- case of switching off tight coupling
-         approximation. Provide correct initial conditions to new set
-         of variables */
+         approximation. Provide correct initial
+         conditions to new set of variables */
 
       if ((pa_old[ppw->index_ap_tca] == (int)tca_on) && (ppw->approx[ppw->index_ap_tca] == (int)tca_off)) {
 
@@ -5967,6 +5967,10 @@ int perturbations_approximations(
   /* (c) time scale of recombination, \f$ \tau_{\gamma} = 1/\kappa' \f$ */
   double tau_c;
 
+  /* DM-SM interactions */
+  /* in case of idm_b there is an additional condition for the dark tca, tau_c_twin * R_idm_b << 1 which we need to take into account - see 1802.06589 and 1802.06788 */
+  double tau_R_idm_b;
+
   /** - compute Fourier mode time scale = \f$ \tau_k = 1/k \f$ */
 
   class_test(k == 0.,
@@ -6005,7 +6009,6 @@ int perturbations_approximations(
                ppt->error_message);
                
     if (ppw->pvecthermo[pth->index_th_dmu_idm_dr] < 0) {
-        //printf("Warning: dmu_idm_dr < 0 and is = %g. Setting to 0.\n",ppw->pvecthermo[pth->index_th_dmu_idm_dr]);
         ppw->pvecthermo[pth->index_th_dmu_idm_dr] = 0.;
     
     }
@@ -6027,11 +6030,12 @@ int perturbations_approximations(
 
       class_test(tau_c < 0.,
                  ppt->error_message,
-                 "tau_c = 1/kappa' should always be positive unless there is something wrong in the thermodynamics module. However you have here tau_c=%e at z=%e, conformal time=%e x_e=%e. (This could come from the interpolation of a too poorly sampled reionisation history?). r_all_twin=%g,Delta_N_twin=%g, m_p=%g,m_e=%g,alpha_d=%g. \n",
+                 "tau_c = 1/kappa' should always be positive unless there is something wrong in the thermodynamics module. However you have here tau_c=%e at z=%e, conformal time=%e x_e=%e. (This could come from the interpolation of a too poorly sampled reionisation history?).\nr_all_twin=%g, Delta_N_twin=%g, m_p=%g, m_e=%g, alpha_d=%g. \n",
                  tau_c,
                  1./ppw->pvecback[pba->index_bg_a]-1.,
                  tau,
                  ppw->pvecthermo[pth->index_th_xe],pba->r_all_twin,pba->Delta_N_twin,pba->m_p_dark,pba->m_e_dark,pba->alphafs_dark);
+      
       /* BEGIN #TWIN SECTOR - Print dark sector variables above for debugging purposes */
       /** - ----> (b.2.b) check whether tight-coupling approximation should be on */
 
@@ -6045,11 +6049,11 @@ int perturbations_approximations(
 
     }
 
-    if(pba->has_idm_dr == _TRUE_){
-      if(ppw->pvecthermo[pth->index_th_dmu_idm_dr] == 0.){
+    if (pba->has_idm_dr == _TRUE_) {
+      if (ppw->pvecthermo[pth->index_th_dmu_idm_dr] == 0.) {
         ppw->approx[ppw->index_ap_tca_idm_dr] = (int)tca_idm_dr_off;
       }
-      else{
+      else {
         
         class_test(1./ppw->pvecthermo[pth->index_th_dmu_idm_dr] < 0.,
                    ppt->error_message,
@@ -6058,20 +6062,23 @@ int perturbations_approximations(
                    1./ppw->pvecback[pba->index_bg_a]-1.,
                    tau);
         
-        if (pth->rs_d_twin > 40){//Tune this threshold. CHECK. 
-          ppr->idm_dr_tight_coupling_trigger_tau_c_over_tau_h = 0.00;
-          ppr->idm_dr_tight_coupling_trigger_tau_c_over_tau_k = 0.00;
-        }
-        
-        if (pth->rs_d_twin > 100){//Tune this threshold. CHECK. 
-          ppr->idm_dr_tight_coupling_trigger_tau_c_over_tau_h = 0.0;
-          ppr->idm_dr_tight_coupling_trigger_tau_c_over_tau_k = 0.0;
-        }
-        
         if ((1./tau_h/ppw->pvecthermo[pth->index_th_dmu_idm_dr] < ppr->idm_dr_tight_coupling_trigger_tau_c_over_tau_h) &&
             (1./tau_k/ppw->pvecthermo[pth->index_th_dmu_idm_dr] < ppr->idm_dr_tight_coupling_trigger_tau_c_over_tau_k) &&
             (pth->nindex_idm_dr>=2) && (ppt->idr_nature == idr_free_streaming)) {
           ppw->approx[ppw->index_ap_tca_idm_dr] = (int)tca_idm_dr_on;
+          
+          /* for idm_b there is an additional condition for the dark tca */ 
+          if (pth->has_idm_b == _TRUE_) {
+            tau_R_idm_b = 1./ppw->pvecthermo[pth->index_th_R_idm_b];  // interaction timescale
+          
+            if (1./tau_R_idm_b/ppw->pvecthermo[pth->index_th_dmu_idm_dr] >= ppr->tight_coupling_trigger_tau_c_over_tau_R_idm_b) {
+              if (ppt->perturbations_verbose > 2) {
+                printf("switched off tca for k = %5.e because of idm_b at tau = %5.e\n", k, tau);
+              }
+              ppw->approx[ppw->index_ap_tca_idm_dr] = (int)tca_idm_dr_off;
+            }
+          }
+
         }
         else{
           ppw->approx[ppw->index_ap_tca_idm_dr] = (int)tca_idm_dr_off;
@@ -8520,11 +8527,11 @@ int perturbations_derivs(double tau,
   double delta_g=0.,theta_g=0.,shear_g=0.;
   double delta_b,theta_b;
   double delta_idr=0., theta_idr=0.;
+  double delta_idm_dr=0., theta_idm_dr=0.;
   double cb2,cs2,ca2,delta_p_b_over_rho_b;
   double metric_continuity=0.,metric_euler=0.,metric_shear=0.,metric_ufa_class=0.;
 
   /* perturbed recombination (just to simplify the notation) */
-
   double H0=0.,Nnow=0.,n_H=0.,fHe=0.;
   double delta_temp=0.,delta_chi=0., chi=0.;
   double alpha_rec=0.,delta_alpha_rec=0.;
@@ -8543,13 +8550,20 @@ int perturbations_derivs(double tau,
   double q,epsilon,dlnf0_dlnq,qk_div_epsilon;
   double rho_ncdm_bg,p_ncdm_bg,pseudo_p_ncdm,w_ncdm,ca2_ncdm,ceff2_ncdm=0.,cvis2_ncdm=0.;
 
+  /* for use with DM-SM interactions */
+  double S_idm_dr=0.;
+  double R_idm_b = 0., R_idm_b_eD = 0., R_idm_b_pD = 0., dR_idm_b = 0., dR_idm_b_eD = 0., dR_idm_b_pD = 0.;
+  double beta_idm_b = 0., beta_idm_b_eD = 0., beta_idm_b_pD = 0.; // beta_idm_b is equivalent to beta_dmeff in CLASS dmeff
+  double S_idm_b = 0., S_idm_b_eD = 0., S_idm_b_pD = 0.;          // S_idm_b is equivalent to R_dmeff in CLASS dmeff
+  double tau_idm_b_eD, tau_idm_b_pD, dtau_idm_b_eD, dtau_idm_b_pD;
+
+
   /* for use with curvature */
   double cotKgen, sqrt_absK;
   double s2_squared, ssqrt3;
 
   /* for use with dcdm and dr */
   double f_dr, fprime_dr;
-
   double Sinv=0., dmu_idm_dr=0., dmu_idr=0., tca_slip_idm_dr=0.;
 
   /** - rename the fields of the input structure (just to avoid heavy notations) */
@@ -8612,10 +8626,50 @@ int perturbations_derivs(double tau,
   a_prime_over_a = pvecback[pba->index_bg_H] * a;
   R = 4./3. * pvecback[pba->index_bg_rho_g]/pvecback[pba->index_bg_rho_b];
 
-  if((pba->has_idm_dr==_TRUE_)){
+  if (pba->has_idm_dr == _TRUE_) {
     Sinv = 4./3. * pvecback[pba->index_bg_rho_idr]/ pvecback[pba->index_bg_rho_idm_dr];
     dmu_idm_dr = pvecthermo[pth->index_th_dmu_idm_dr];
     dmu_idr = pth->b_idr/pth->a_idm_dr*pba->Omega0_idr/pba->Omega0_idm_dr*dmu_idm_dr;
+  }
+  /* DM-SM interactions. */
+  if (pth->has_idm_b == _TRUE_) {
+    // R_idm_b is equivalent to rate_dmeff in CLASS dmeff
+    R_idm_b_eD = pvecthermo[pth->index_th_R_idm_b_ep] + pvecthermo[pth->index_th_R_idm_b_ee];
+    R_idm_b_pD = pvecthermo[pth->index_th_R_idm_b_pp] + pvecthermo[pth->index_th_R_idm_b_pe];
+    
+    dR_idm_b_eD = pvecthermo[pth->index_th_dR_idm_b_ep] + pvecthermo[pth->index_th_dR_idm_b_ee];
+    dR_idm_b_pD = pvecthermo[pth->index_th_dR_idm_b_pp] + pvecthermo[pth->index_th_dR_idm_b_pe];
+
+    tau_idm_b_eD = 0.; dtau_idm_b_eD = 0.;
+    tau_idm_b_pD = 0.; dtau_idm_b_pD = 0.;
+    if (R_idm_b_eD > 0.) {
+      tau_idm_b_eD = 1./R_idm_b_eD;
+      dtau_idm_b_eD = -dR_idm_b_eD/R_idm_b_eD/R_idm_b_eD;
+    }
+    if (R_idm_b_pD > 0.) {
+      tau_idm_b_pD = 1./R_idm_b_pD;
+      dtau_idm_b_pD = -dR_idm_b_pD/R_idm_b_pD/R_idm_b_pD;
+    }
+
+    // compute ratios of energy densities
+    double m_pD = pba->m_p_dark*1e9; /* all masses in eV/c^2 */
+    double m_eD = pba->m_e_dark*1e9;
+    double m_HD = _m_H_twin*_c_*_c_/_eV_;
+    double FHe_twin = 1.-pth->YHe_twin;
+    double rho_free_pD = pvecback[pba->index_bg_rho_b_twin]*FHe_twin*pvecthermo[pth->index_th_xe_twin]*m_pD/m_HD;
+    double rho_free_eD = pvecback[pba->index_bg_rho_b_twin]*FHe_twin*pvecthermo[pth->index_th_xe_twin]*m_eD/m_HD;
+
+    S_idm_b_eD = rho_free_eD/pvecback[pba->index_bg_rho_b];
+    S_idm_b_pD = rho_free_pD/pvecback[pba->index_bg_rho_b];
+    S_idm_b = pvecback[pba->index_bg_rho_b_twin]/pvecback[pba->index_bg_rho_b];
+
+    // total rate and its derivative, the weights for the rates are (rho_interacting_species / rho_b_twin)
+    R_idm_b  = pvecthermo[pth->index_th_R_idm_b];   // (S_idm_b_eD/S_idm_b) * R_idm_b_eD + (S_idm_b_pD/S_idm_b) * R_idm_b_pD;
+    dR_idm_b = pvecthermo[pth->index_th_dR_idm_b];  // (S_idm_b_eD/S_idm_b) * dR_idm_b_eD + (S_idm_b_pD/S_idm_b) * dR_idm_b_pD;
+
+    beta_idm_b_eD = ( R_idm_b_eD/pvecthermo[pth->index_th_dkappa] ) * S_idm_b_eD / (1. + R);
+    beta_idm_b_pD = ( R_idm_b_pD/pvecthermo[pth->index_th_dkappa] ) * S_idm_b_pD / (1. + R);
+    beta_idm_b = beta_idm_b_eD + beta_idm_b_pD;
   }
 
   /** - Compute 'generalised cotK function of argument \f$ \sqrt{|K|}*\tau \f$, for closing hierarchy.
@@ -8654,16 +8708,21 @@ int perturbations_derivs(double tau,
     cb2 = pvecthermo[pth->index_th_cb2];
     delta_p_b_over_rho_b = cb2*delta_b; /* for baryons, (delta p)/rho with Ma & Bertschinger approximation: sound speed = adiabatic sound speed */
 
+    if (pba->has_idm_dr == _TRUE_){
+      delta_idm_dr = y[pv->index_pt_delta_idm_dr];
+      theta_idm_dr = y[pv->index_pt_theta_idm_dr];
+      ppw->theta_idm_dr = theta_idm_dr;
+    }
 
     /** - --> (b) perturbed recombination **/
 
     if ((ppt->has_perturbed_recombination == _TRUE_)&&(ppw->approx[ppw->index_ap_tca]==(int)tca_off)){
 
-      delta_temp= y[ppw->pv->index_pt_perturbed_recombination_delta_temp];
+      delta_temp = y[ppw->pv->index_pt_perturbed_recombination_delta_temp];
       delta_p_b_over_rho_b = pvecthermo[pth->index_th_wb]*(delta_b+delta_temp); /* for baryons, (delta p)/rho with sound speed from arXiv:0707.2727 */
 
-      delta_chi= y[ppw->pv->index_pt_perturbed_recombination_delta_chi];
-      chi=pvecthermo[pth->index_th_xe];
+      delta_chi = y[ppw->pv->index_pt_perturbed_recombination_delta_chi];
+      chi = pvecthermo[pth->index_th_xe];
 
       // Conversion of H0 in inverse seconds (pba->H0 is [H0/c] in inverse Mpcs)
       H0 = pba->H0 * _c_ / _Mpc_over_m_;
@@ -8744,6 +8803,58 @@ int perturbations_derivs(double tau,
 
     /** - --> (e) BEGINNING OF ACTUAL SYSTEM OF EQUATIONS OF EVOLUTION */
 
+    /* start with idm as it might be needed during (normal) tca  */
+    /** - ---> idr */
+    if (pba->has_idr == _TRUE_){
+      if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off) {
+        dy[pv->index_pt_delta_idr] = -4./3.*(theta_idr + metric_continuity);
+      }
+    }
+
+    /** - ---> idm_dr */
+    if (pba->has_idm_dr == _TRUE_){
+
+      double c2_idm_dr = pvecthermo[pth->index_th_cidm_dr2];
+
+      dy[pv->index_pt_delta_idm_dr] = -(theta_idm_dr+metric_continuity); /* idm_dr density */
+
+      dy[pv->index_pt_theta_idm_dr] =
+        - a_prime_over_a*theta_idm_dr + metric_euler
+        + k2*c2_idm_dr*delta_idm_dr;
+    
+      /* DM-SM interactions */
+      if (pth->has_idm_b == _TRUE_){
+        /* correction to idm velocity due to idm_b */
+        dy[pv->index_pt_theta_idm_dr] += -R_idm_b * (theta_idm_dr-theta_b);
+      }
+    
+      // DM-DR interactions
+      if (ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off) {
+        dy[pv->index_pt_theta_idm_dr] += -Sinv * dmu_idm_dr * (theta_idm_dr - theta_idr); /* correction to idm velocity due to idm_dr when tca_idm_dr is off */
+      }
+      else {
+        tca_slip_idm_dr = (pth->nindex_idm_dr-2./(1.+Sinv))*a_prime_over_a*(theta_idm_dr - theta_idr)
+          + 1./(1.+Sinv)/dmu_idm_dr* ( - theta_idm_dr * (pvecback[pba->index_bg_H_prime] * a + 2. * a_prime_over_a * a_prime_over_a)
+                                           - a_prime_over_a * (.5*k2*delta_idr + metric_euler) - k2*c2_idm_dr*(theta_idm_dr+metric_continuity) + k2/3.*(theta_idr + metric_continuity)
+                                           );
+        
+        if (pth->has_idm_b == _TRUE_) {
+          tca_slip_idm_dr += 1./(1.+Sinv)/dmu_idm_dr * ( - (a_prime_over_a * R_idm_b + dR_idm_b) * (theta_idm_dr - theta_b)
+                                                             - R_idm_b * ( dy[pv->index_pt_theta_idm_dr] + a_prime_over_a * theta_b - metric_euler - k2 * delta_p_b_over_rho_b
+                                                                         - R * pvecthermo[pth->index_th_dkappa] * (theta_g - theta_b)
+                                                                         - (S_idm_b_eD * R_idm_b_eD + S_idm_b_pD * R_idm_b_pD) * (theta_idm_dr - theta_b) ) );
+        }
+        
+        ppw->tca_shear_idm_dr = 0.5*8./15./dmu_idm_dr/ppt->alpha_idm_dr[0]*(y[pv->index_pt_theta_idm_dr]+metric_shear);
+        dy[pv->index_pt_theta_idm_dr] = 1./(1.+Sinv)* dy[pv->index_pt_theta_idm_dr] /* This is technically correct as long as idm_dr is the last interaction calculated */
+          + Sinv/(1.+Sinv)*(k2*(delta_idr/4. - ppw->tca_shear_idm_dr) + metric_euler) /* the other part of metric_euler is in dtheta_idm  */
+          + Sinv/(1.+Sinv)*tca_slip_idm_dr; /* overwrite the idm velocity when tca_idm_dr is on */
+      }
+      
+      ppw->theta_idm_dr_prime = dy[pv->index_pt_theta_idm_dr];
+      
+    }
+
     /** - ---> photon temperature density */
 
     if (ppw->approx[ppw->index_ap_rsa] == (int)rsa_off) {
@@ -8768,7 +8879,10 @@ int perturbations_derivs(double tau,
         + metric_euler
         + k2*delta_p_b_over_rho_b
         + R*pvecthermo[pth->index_th_dkappa]*(theta_g-theta_b);
-
+      
+      if (pth->has_idm_b == _TRUE_) {
+        dy[pv->index_pt_theta_b] += (S_idm_b_eD * R_idm_b_eD + S_idm_b_pD * R_idm_b_pD) * (theta_idm_dr - theta_b);
+      }
     }
 
     else {
@@ -8779,12 +8893,35 @@ int perturbations_derivs(double tau,
                  error_message);
 
       /* perturbed recombination has an impact **/
+      
       dy[pv->index_pt_theta_b] =
         (-a_prime_over_a*theta_b
          +k2*(delta_p_b_over_rho_b+R*(delta_g/4.-s2_squared*ppw->tca_shear_g))
-         +R*ppw->tca_slip)/(1.+R)
+         +R*ppw->tca_slip)/(1.+R+beta_idm_b*R)
         +metric_euler;
-
+      
+      if (pth->has_idm_b == _TRUE_ && R_idm_b > 0) {
+        /* the standard equation involves cancellations between very large numbers that should give
+           very small numbers as a result, whereas the following TCA equation, which is based on
+           https://arxiv.org/pdf/astro-ph/0406355 Sec. B, is more numerically stable, since it only
+           involves reasonable numbers (the ratio of idm-b rates to Thomson rate controls the TCA) */
+        if (R_idm_b_eD > 0.) {
+          /* dark electrons */
+          dy[pv->index_pt_theta_b] +=
+            (R*beta_idm_b_eD*(a_prime_over_a-dtau_idm_b_eD/tau_idm_b_eD)*(theta_idm_dr-theta_b)
+             + S_idm_b_eD/tau_idm_b_eD*(theta_idm_dr-theta_b)
+             + R*beta_idm_b_eD*dy[pv->index_pt_theta_idm_dr]
+             - R*beta_idm_b_eD*metric_euler) / (1.+R+beta_idm_b*R);
+        }
+        if (R_idm_b_pD > 0.) {
+          /* dark protons */
+          dy[pv->index_pt_theta_b] +=
+            (R*beta_idm_b_pD*(a_prime_over_a-dtau_idm_b_pD/tau_idm_b_pD)*(theta_idm_dr-theta_b)
+             + S_idm_b_pD/tau_idm_b_pD*(theta_idm_dr-theta_b)
+             + R*beta_idm_b_pD*dy[pv->index_pt_theta_idm_dr]
+             - R*beta_idm_b_pD*metric_euler) / (1.+R+beta_idm_b*R);
+        }
+      }
     }
 
     /** - ---> photon temperature higher momenta and photon polarization (depend on tight-coupling approximation) */
@@ -8871,11 +9008,14 @@ int perturbations_derivs(double tau,
 
         /** - -----> in that case, only need photon velocity */
 
-
         /* perturbed recombination has an impact **/
         dy[pv->index_pt_theta_g] =
           -(dy[pv->index_pt_theta_b]+a_prime_over_a*theta_b-k2*delta_p_b_over_rho_b)/R
           +k2*(0.25*delta_g-s2_squared*ppw->tca_shear_g)+(1.+R)/R*metric_euler;
+        
+        if (pth->has_idm_b == _TRUE_) {
+          dy[pv->index_pt_theta_g] += (S_idm_b_eD * R_idm_b_eD + S_idm_b_pD * R_idm_b_pD) * (theta_idm_dr - theta_b) / R;
+        }
       }
     }
 
@@ -8896,40 +9036,6 @@ int perturbations_derivs(double tau,
       if (ppt->gauge == synchronous) {
         dy[pv->index_pt_delta_cdm] = -metric_continuity; /* cdm density */
       }
-    }
-
-    /** - ---> idr */
-    if (pba->has_idr == _TRUE_){
-      if (ppw->approx[ppw->index_ap_rsa_idr] == (int)rsa_idr_off) {
-        dy[pv->index_pt_delta_idr] = -4./3.*(theta_idr + metric_continuity);
-      }
-    }
-
-    /** - ---> idm_dr */
-    if (pba->has_idm_dr == _TRUE_){
-
-      dy[pv->index_pt_delta_idm_dr] = -(y[pv->index_pt_theta_idm_dr]+metric_continuity); /* idm_dr density */
-
-      if (ppw->approx[ppw->index_ap_tca_idm_dr] == (int)tca_idm_dr_off) {
-
-        dy[pv->index_pt_theta_idm_dr] = - a_prime_over_a*y[pv->index_pt_theta_idm_dr] + metric_euler; /* idm_dr velocity */
-        dy[pv->index_pt_theta_idm_dr] -= (Sinv*dmu_idm_dr*(y[pv->index_pt_theta_idm_dr] - theta_idr) - k2*pvecthermo[pth->index_th_cidm_dr2]*y[pv->index_pt_delta_idm_dr]);
-      }
-      else{
-
-        tca_slip_idm_dr = (pth->nindex_idm_dr-2./(1.+Sinv))*a_prime_over_a*(y[pv->index_pt_theta_idm_dr]-theta_idr) + 1./(1.+Sinv)/dmu_idm_dr*
-          (-(pvecback[pba->index_bg_H_prime] * a + 2. * a_prime_over_a * a_prime_over_a) *y[pv->index_pt_theta_idm_dr] - a_prime_over_a *
-           (.5*k2*delta_idr + metric_euler) + k2*(pvecthermo[pth->index_th_cidm_dr2]*dy[pv->index_pt_delta_idm_dr] - 1./4.*dy[pv->index_pt_delta_idr]));
-
-        ppw->tca_shear_idm_dr = 0.5*8./15./dmu_idm_dr/ppt->alpha_idm_dr[0]*(y[pv->index_pt_theta_idm_dr]+metric_shear);
-
-        dy[pv->index_pt_theta_idm_dr] = 1./(1.+Sinv)*(- a_prime_over_a*y[pv->index_pt_theta_idm_dr] + k2*pvecthermo[pth->index_th_cidm_dr2]*
-                                                   y[pv->index_pt_delta_idm_dr] + k2*Sinv*(delta_idr/4. - ppw->tca_shear_idm_dr)) + metric_euler + Sinv/(1.+Sinv)*tca_slip_idm_dr;
-      }
-      
-    //TWIN FLAG 
-    /*int random_num = rand() % 1000;
-    if (random_num > 995 ){printf("z=%g, k2=%g, delta_idm_dr=%g, theta_idm_dr = %g, deriv_delta_idm_dr = %g, deriv_theta_idm_dr = %g, dmu_idm_dr = %g\n", 1./pvecback[pba->index_bg_a]-1., k2,y[pv->index_pt_delta_idm_dr], y[pv->index_pt_theta_idm_dr],dy[pv->index_pt_delta_idm_dr] ,dy[pv->index_pt_theta_idm_dr] ,dmu_idm_dr );}  */
     }
 
 
@@ -9692,6 +9798,13 @@ int perturbations_tca_slip_and_shear(double * y,
   double cb2;
   double metric_continuity=0.,metric_euler=0.,metric_shear=0.,metric_shear_prime=0.;
 
+  double theta_idm_dr = 0., theta_idm_dr_prime = 0.;
+  /* in case of idm_b */
+  // split between interactions involving dark electrons and interactions involving dark protons
+  double tau_idm_b_eD = 0., tau_idm_b_pD = 0., dtau_idm_b_eD = 0., dtau_idm_b_pD = 0.;   /* inverse rates and derivatives */
+  double R_idm_b_eD = 0., R_idm_b_pD = 0., R_idm_b_prime_eD = 0., R_idm_b_prime_pD = 0.; /* rates and derivatives */
+  double S_idm_b = 0., S_idm_b_eD = 0., S_idm_b_pD = 0.;                                 /* energy density ratios (rho_twin_species/rho_b) */
+
   /* for use with curvature */
   double s2_squared;
 
@@ -9732,19 +9845,57 @@ int perturbations_tca_slip_and_shear(double * y,
   /* during TCA one can show that sound speed = adiabatic sound speed,
      so no need to take into account corrections from perturbed
      recombination here */
+  
+  if (pba->has_idm_dr == _TRUE_){
+    theta_idm_dr = y[pv->index_pt_theta_idm_dr];
+    theta_idm_dr_prime = ppw->theta_idm_dr_prime;
+  }
+
+  /* terms for idm_b */
+  if (pth->has_idm_b == _TRUE_) {
+    R_idm_b_eD = pvecthermo[pth->index_th_R_idm_b_ep] + pvecthermo[pth->index_th_R_idm_b_ee];
+    R_idm_b_pD = pvecthermo[pth->index_th_R_idm_b_pp] + pvecthermo[pth->index_th_R_idm_b_pe];
+
+    R_idm_b_prime_eD = pvecthermo[pth->index_th_dR_idm_b_ep] + pvecthermo[pth->index_th_dR_idm_b_ee];
+    R_idm_b_prime_pD = pvecthermo[pth->index_th_dR_idm_b_pp] + pvecthermo[pth->index_th_dR_idm_b_pe];
+
+    /* in computing S_idm_b_X, the ratio of energy densities here should be rho_interacting_species_X / rho_b */
+    double m_pD = pba->m_p_dark*1e9; /* all masses in eV/c^2 */
+    double m_eD = pba->m_e_dark*1e9;
+    double m_HD = _m_H_twin*_c_*_c_/_eV_;
+    double FHe_twin = 1.-pth->YHe_twin;
+    double rho_free_pD = pvecback[pba->index_bg_rho_b_twin]*FHe_twin*pvecthermo[pth->index_th_xe_twin]*m_pD/m_HD;
+    double rho_free_eD = pvecback[pba->index_bg_rho_b_twin]*FHe_twin*pvecthermo[pth->index_th_xe_twin]*m_eD/m_HD;
+
+    S_idm_b_eD = rho_free_eD/pvecback[pba->index_bg_rho_b];
+    S_idm_b_pD = rho_free_pD/pvecback[pba->index_bg_rho_b];
+    S_idm_b = pvecback[pba->index_bg_rho_b_twin]/pvecback[pba->index_bg_rho_b];
+
+    class_test( (ppr->tight_coupling_approximation != (int)first_order_CLASS),
+                ppt->error_message,
+                "idm_b is only coded with the first order and compromise CLASS approximation in the tight coupling regime.");
+  }
 
   /** - --> (b) define short-cut notations used only in tight-coupling approximation */
   tau_c = 1./pvecthermo[pth->index_th_dkappa]; /* inverse of opacity */
   dtau_c = -pvecthermo[pth->index_th_ddkappa]*tau_c*tau_c; /* its first derivative wrt conformal time */
   F = tau_c/(1+R); /* F = tau_c/(1+R) */
   if (ppr->tight_coupling_approximation >= (int)second_order_CLASS) {
-    F_prime = dtau_c/(1+R)+tau_c*a_prime_over_a*R/(1+R)/(1+R); /*F' needed by second_order_CLASS and compromise_CLASS */
+    F_prime = dtau_c/(1+R)+tau_c*a_prime_over_a*R/(1+R)/(1+R); /* F' needed by second_order_CLASS and compromise_CLASS */
     if (ppr->tight_coupling_approximation == (int)second_order_CLASS) {
       F_prime_prime =(- pvecthermo[pth->index_th_dddkappa]*tau_c*tau_c /* F'' needed by second_order_CLASS only */
                       + 2.*pvecthermo[pth->index_th_ddkappa]*pvecthermo[pth->index_th_ddkappa]*tau_c*tau_c*tau_c)/(1+R)
         +2.*dtau_c*a_prime_over_a*R/(1+R)/(1+R)
         +tau_c*((a_primeprime_over_a-2.*a_prime_over_a*a_prime_over_a)+2.*a_prime_over_a*a_prime_over_a*R/(1+R))*R/(1+R)/(1+R);
     }
+  }
+
+  if (pth->has_idm_b == _TRUE_) {
+    tau_idm_b_eD = 1./R_idm_b_eD;
+    tau_idm_b_pD = 1./R_idm_b_pD;
+
+    dtau_idm_b_eD = -R_idm_b_prime_eD/R_idm_b_eD/R_idm_b_eD;
+    dtau_idm_b_pD = -R_idm_b_prime_pD/R_idm_b_pD/R_idm_b_pD;
   }
 
   /** - --> (c) compute metric-related quantities (depending on gauge; additional gauges can be coded below)

@@ -580,14 +580,14 @@ int background_functions(
     /* Approximate dark radiation temperature, accounting for possibility of relativistic dark electrons. Uses 0th order T=T0(1+z) to find g*(T(a)), and fit for g*(T) instead of full integral. Approx 5% error in g* during dark e+e- annihilation, accurate before and after */
     Trad_twin = (pba->T0_twin/a) * pow(2/(2 + (7./2.)*pow(1 + pow(ye,1.394),0.247) * exp(-0.277 * pow(ye,1.384))),1./3.);
     
-    /* TWIN  photons and relativistic contribution from twin electrons */
+    /* TWIN photons and relativistic contribution from twin electrons */
     pvecback[pba->index_bg_rho_g_twin] = pba->Omega0_g_twin * pow(pba->H0,2) * (1./2.)*(2 + (7./2.)*pow(1 + pow((pba->m_e_dark * pow(10.0,9) * _eV_ / _k_B_)/Trad_twin,1.394),0.247) * exp(-0.277 * pow((pba->m_e_dark * pow(10.0,9) * _eV_ / _k_B_)/Trad_twin,1.384))) * pow(Trad_twin/pba->T0_twin,4); /*/ pow(a,4); Replace scaling with a, by scaling with temperature, and correct T scaling with a. Use full, correct g*(T) instead of g*=2. */
     /*printf("scale factor: %g, Correct Tdark: %g, naive Tdark: %g, ye: %g, rho_g_twin with corrections: %g, without: %g\n",a, Trad_twin, pba->T0_twin/a,ye, pvecback[pba->index_bg_rho_g_twin],pba->Omega0_g_twin * pow(pba->H0,2) / pow(a,4));*/
     rho_tot += pvecback[pba->index_bg_rho_g_twin];
     p_tot += (1./3.) * pvecback[pba->index_bg_rho_g_twin];
     rho_r += pvecback[pba->index_bg_rho_g_twin];
       
-    /* TWIN  relativistic neutrinos  */
+    /* TWIN relativistic neutrinos  */
     pvecback[pba->index_bg_rho_ur_twin] = pba->Omega0_ur_twin * pow(pba->H0,2) * pow(Trad_twin/pba->T0_twin,4);/* / pow(a,4);*/
     // Twin neutrinos have already been added to Omega_ur
    
@@ -597,7 +597,7 @@ int background_functions(
     p_tot += 0;
     rho_m += pvecback[pba->index_bg_rho_b_twin];
   }
-    /** END TWIN SECTOR */
+  /** END TWIN SECTOR */
 
   /** - compute expansion rate H from Friedmann equation: this is the
       only place where the Friedmann equation is assumed. Remember
@@ -1006,22 +1006,22 @@ int background_indices(
 
   /** - initialize all flags: which species are present? */
 
-  pba->has_cdm = _FALSE_;
-  pba->has_ncdm = _FALSE_;
-  pba->has_dcdm = _FALSE_;
-  pba->has_dr = _FALSE_;
-  pba->has_scf = _FALSE_;
-  pba->has_lambda = _FALSE_;
-  pba->has_fld = _FALSE_;
-  pba->has_ur = _FALSE_;
-  pba->has_idr = _FALSE_;
-  pba->has_idm_dr = _FALSE_;
+  pba->has_cdm       = _FALSE_;
+  pba->has_ncdm      = _FALSE_;
+  pba->has_dcdm      = _FALSE_;
+  pba->has_dr        = _FALSE_;
+  pba->has_scf       = _FALSE_;
+  pba->has_lambda    = _FALSE_;
+  pba->has_fld       = _FALSE_;
+  pba->has_ur        = _FALSE_;
+  pba->has_idr       = _FALSE_;
+  pba->has_idm_dr    = _FALSE_;
   pba->has_curvature = _FALSE_;
   pba->has_varconst  = _FALSE_;
 
   /** START #TWIN SECTOR */
   /* TWIN: Initializing the twin flag */
-  pba->has_twin = _FALSE_;
+  pba->has_twin  = _FALSE_;
   /** END TWIN SECTOR */
 
 
@@ -1150,20 +1150,20 @@ int background_indices(
      normal vector */
   /*    */
  /** START #TWIN SECTOR */
-  /* Assign twin baryon rho index to idm_dr*/
+  /* Assign twin photon rho index to idm_dr*/
   class_define_index(pba->index_bg_rho_idr,pba->has_twin,index_bg,0);
 
   /* TWIN index for rho_g_twin (mirror photon density) */
-  class_define_index(pba->index_bg_rho_g_twin, pba->has_twin, index_bg,1);
+  class_define_index(pba->index_bg_rho_g_twin,pba->has_twin,index_bg,1);
 
   /* TWIN index for rho_ur_twin (mirror neutrinos density) */
-  class_define_index(pba->index_bg_rho_ur_twin, pba->has_twin, index_bg,1);
+  class_define_index(pba->index_bg_rho_ur_twin,pba->has_twin,index_bg,1);
 
   /* Assign twin baryon rho index to idm_dr*/
   class_define_index(pba->index_bg_rho_idm_dr,pba->has_twin,index_bg,0);
 
   /* TWIN index for rho_b_twin (mirror baryon density) */
-  class_define_index(pba->index_bg_rho_b_twin, pba->has_twin, index_bg,1);
+  class_define_index(pba->index_bg_rho_b_twin,pba->has_twin,index_bg,1);
 
   /** END TWIN SECTOR */
   /*    */

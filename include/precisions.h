@@ -309,11 +309,18 @@ class_precision_parameter(tight_coupling_trigger_tau_c_over_tau_h,double,0.015)
  */
 class_precision_parameter(tight_coupling_trigger_tau_c_over_tau_k,double,0.01)
 
+/* DM-SM interactions */
+/**
+ * when to switch off dark tight-coupling approximation:
+ * condition for the case of idm with baryons,
+ * lower values switch it off earlier in time.
+ */
+class_precision_parameter(tight_coupling_trigger_tau_c_over_tau_R_idm_b, double, 0.1) //0.01)
+
 class_precision_parameter(start_sources_at_tau_c_over_tau_h,double,0.008) /**< sources start being sampled when universe is sufficiently opaque. This is quantified in terms of the ratio of thermo to hubble time scales, \f$ \tau_c/\tau_H \f$. Start when start_sources_at_tau_c_over_tau_h equals this ratio. Decrease this value to start sampling the sources earlier in time. */
 
 class_precision_parameter(tight_coupling_approximation,int,(int)compromise_CLASS) /**< method for tight coupling approximation */
 /* TWIN: Changed the idm_dr tight coupling trigger values to be smaller. */
-/* Temporarily turn these back on. Make sure to set to 0 if you want to get the power spectrum at high k. */
 class_precision_parameter(idm_dr_tight_coupling_trigger_tau_c_over_tau_k,double,0.01)  /**< Original value: 0.01. when to switch off the dark-tight-coupling approximation, first condition (see normal tca for full definition) */
 class_precision_parameter(idm_dr_tight_coupling_trigger_tau_c_over_tau_h,double,0.015) /**< Original value: 0.015. when to switch off the dark-tight-coupling approximation, second condition (see normal tca for full definition) */
 

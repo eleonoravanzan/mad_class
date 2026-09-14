@@ -29,7 +29,7 @@ def viewdictitems(d):
         return d.viewitems()
 
 ctypedef np.float_t DTYPE_t
-ctypedef np.int_t DTYPE_i
+ctypedef np.int64_t DTYPE_i
 
 
 
@@ -99,10 +99,10 @@ cdef class Class:
     cdef distortions sd
     cdef file_content fc
 
-    cpdef int computed # Flag to see if classy has already computed with the given pars
-    cpdef int allocated # Flag to see if classy structs are allocated already
-    cpdef object _pars # Dictionary of the parameters
-    cpdef object ncp   # Keeps track of the structures initialized, in view of cleaning.
+    cdef int computed # Flag to see if classy has already computed with the given pars
+    cdef int allocated # Flag to see if classy structs are allocated already
+    cdef object _pars # Dictionary of the parameters
+    cdef object ncp   # Keeps track of the structures initialized, in view of cleaning.
 
     # Defining two new properties to recover, respectively, the parameters used
     # or the age (set after computation). Follow this syntax if you want to
@@ -127,7 +127,7 @@ cdef class Class:
         self.set(**_pars)
 
     def __cinit__(self, default=False):
-        cpdef char* dumc
+        cdef char* dumc
         self.allocated = False
         self.computed = False
         self._pars = {}
@@ -1229,6 +1229,151 @@ cdef class Class:
     
     def ds_d_twin(self):
         return self.th.ds_d_twin
+    
+    def z_d_twin_estimate(self):
+        return self.th.z_d_twin_estimate
+    
+    def x_e_twin_asympt(self):
+        cdef double tau
+        cdef int last_index #junk
+        cdef double * pvecback
+        cdef double * pvecthermo
+
+        pvecback = <double*> calloc(self.ba.bg_size,sizeof(double))
+        pvecthermo = <double*> calloc(self.th.th_size,sizeof(double))
+
+        if background_tau_of_z(&self.ba,0,&tau)==_FAILURE_:
+            raise CosmoSevereError(self.ba.error_message)
+
+        if background_at_tau(&self.ba,tau,long_info,inter_normal,&last_index,pvecback)==_FAILURE_:
+            raise CosmoSevereError(self.ba.error_message)
+
+        if thermodynamics_at_z(&self.ba,&self.th,0,inter_normal,&last_index,pvecback,pvecthermo) == _FAILURE_:
+            raise CosmoSevereError(self.th.error_message)
+
+        x_e_twin = pvecthermo[self.th.index_th_xe_twin]
+
+        free(pvecback)
+        free(pvecthermo)
+
+        return x_e_twin
+    
+    def epsilon_millicharge(self):
+        cdef double tau
+        cdef int last_index #junk
+        cdef double * pvecback
+        cdef double * pvecthermo
+
+        pvecback = <double*> calloc(self.ba.bg_size,sizeof(double))
+        pvecthermo = <double*> calloc(self.th.th_size,sizeof(double))
+
+        if background_tau_of_z(&self.ba,0,&tau)==_FAILURE_:
+            raise CosmoSevereError(self.ba.error_message)
+
+        if background_at_tau(&self.ba,tau,long_info,inter_normal,&last_index,pvecback)==_FAILURE_:
+            raise CosmoSevereError(self.ba.error_message)
+
+        if thermodynamics_at_z(&self.ba,&self.th,0,inter_normal,&last_index,pvecback,pvecthermo) == _FAILURE_:
+            raise CosmoSevereError(self.th.error_message)
+        
+        # hardcoded constants and conversion factors (as taken from Class headers)
+        _c_   = 2.99792458e8              # c in m/s
+        _eV_  = 1.602176487e-19           # 1 eV expressed in J
+        _k_B_ = 1.3806504e-23
+        _GeVcm3_over_Mpc2_ = 94.7024726      # conversion factor from  CLASS_rho 1/Mpc^2 to rho in GeV/cm^3 (rho in GeV/cm^3=const*CLASS_rho)
+        _cminv_over_eV_    = 0.0000197327    # conversion factor from inverse cm to eV (1 cm^-1= const*eV)  # previously I used 1.23981e-4
+        _GeV_over_kg_      = 1.78266191e-27  # conversion factor from GeV to kg  (1 GeV= const*kg)
+        energy_density_conversion_factor_to_eV4 = (_GeVcm3_over_Mpc2_*1e9)*pow(_cminv_over_eV_,3.)
+        temperature_conversion_factor_to_eV     = _k_B_/_eV_
+        alphaEM = 1./137.
+        
+        # masses in kg
+        m_e_kg = 9.10938215e-31  # electron mass in kg
+        m_p_kg = 1.672621637e-27 # proton mass in kg
+        m_H_kg = 1.673575e-27    # Hydrogen mass in kg
+        mu_twin_kg  = (self.ba.m_e_dark*_GeV_over_kg_*self.ba.m_p_dark*_GeV_over_kg_)/((self.ba.m_e_dark*_GeV_over_kg_) + (self.ba.m_p_dark*_GeV_over_kg_)) # dark reduced mass in kg
+        m_H_twin_kg = (self.ba.m_e_dark*_GeV_over_kg_ + self.ba.m_p_dark*_GeV_over_kg_ -0.5 * mu_twin_kg * self.ba.alphafs_dark * self.ba.alphafs_dark)      # dark H mass in kg
+
+        # masses in eV
+        m_p_eV = m_p_kg * _c_*_c_/_eV_ # in eV/c^2 (~938e6)
+        m_e_eV = m_e_kg * _c_*_c_/_eV_
+        m_H_eV = m_H_kg * _c_*_c_/_eV_
+        m_pD_eV = self.ba.m_p_dark * 1e9
+        m_eD_eV = self.ba.m_e_dark * 1e9
+        m_HD_eV = m_H_twin_kg * _c_*_c_/_eV_
+
+        # reduced masses
+        mu_pp = m_p_eV * m_pD_eV / (m_p_eV + m_pD_eV)
+        mu_pe = m_e_eV * m_pD_eV / (m_e_eV + m_pD_eV)
+        mu_ep = m_p_eV * m_eD_eV / (m_p_eV + m_eD_eV)
+        mu_ee = m_e_eV * m_eD_eV / (m_e_eV + m_eD_eV)
+        cross_pp = self.th.cross_idm_b
+        cross_pe = self.th.cross_idm_b * pow(mu_pp/mu_pe,2.)
+        cross_ep = self.th.cross_idm_b * pow(mu_pp/mu_ep,2.)
+        cross_ee = self.th.cross_idm_b * pow(mu_pp/mu_ee,2.)
+
+        # number densities (in eV^3)
+        YHe      = self.th.YHe;      FHe = 1.-YHe
+        YHe_twin = self.th.YHe_twin; FHe_twin = 1.-YHe_twin
+        x      = pvecthermo[self.th.index_th_xe]
+        x_twin = pvecthermo[self.th.index_th_xe_twin]
+        rho_b      = pvecback[self.ba.index_bg_rho_b]
+        rho_b_twin = pvecback[self.ba.index_bg_rho_b_twin]
+        rho_free_p  = rho_b * FHe * x * m_p_eV/m_H_eV
+        rho_free_e  = rho_b * FHe * x * m_e_eV/m_H_eV
+        rho_free_pD = rho_b_twin * FHe_twin * x_twin * m_pD_eV/m_HD_eV              # in Class units
+        rho_free_eD = rho_b_twin * FHe_twin * x_twin * m_eD_eV/m_HD_eV
+        
+        n_free_p  = rho_free_p/m_p_eV * energy_density_conversion_factor_to_eV4   # in eV^3
+        n_free_e  = rho_free_e/m_e_eV * energy_density_conversion_factor_to_eV4
+        n_free_pD = rho_free_pD/m_pD_eV * energy_density_conversion_factor_to_eV4
+        n_free_eD = rho_free_eD/m_eD_eV * energy_density_conversion_factor_to_eV4
+
+        # temperatures (in eV)
+        Tb      = pvecthermo[self.th.index_th_Tb] * temperature_conversion_factor_to_eV
+        Tb_twin = pvecthermo[self.th.index_th_Tb_twin] * temperature_conversion_factor_to_eV
+
+        # thermal velocity dispersions squared
+        Vrms_idm_b2 = 1.e-8 * pow(((1.+0)/1.e3),2) # at z=0, negligible
+        T_diff_idm_b_pp = (Tb/m_p_eV) + (Tb_twin/m_pD_eV) + (Vrms_idm_b2/3.0)
+        T_diff_idm_b_pe = (Tb/m_e_eV) + (Tb_twin/m_pD_eV) + (Vrms_idm_b2/3.0)
+        T_diff_idm_b_ep = (Tb/m_p_eV) + (Tb_twin/m_eD_eV) + (Vrms_idm_b2/3.0)
+        T_diff_idm_b_ee = (Tb/m_e_eV) + (Tb_twin/m_eD_eV) + (Vrms_idm_b2/3.0)
+
+        # use eD-e scattering (using any of the other processes should change the inferred epsilon by order 10% at worse)
+        vBD = np.sqrt(T_diff_idm_b_ee); muBD = mu_ee; crossBD = cross_ee*pow(1./_cminv_over_eV_,2.)
+
+        prefactor         = 0.5 * ((n_free_e+n_free_p)/(n_free_eD+n_free_pD)) * Tb_twin/Tb
+        term1             = np.log( pow(muBD*vBD,2.) * Tb / (np.pi*alphaEM*(n_free_e+n_free_p)) )
+        term2             = 2. * crossBD * pow(muBD,2.) / (np.pi*alphaEM*alphaEM) * ((n_free_eD+n_free_pD)/(n_free_e+n_free_p)) * Tb/Tb_twin
+        sqrt_discriminant = np.sqrt(term1**2 - term2)
+        #eps2_plus  = prefactor * (term1 + sqrt_discriminant)
+        eps2_minus = prefactor * (term2 / (term1 + sqrt_discriminant))
+
+        free(pvecback)
+        free(pvecthermo)
+
+        # return only the minus solution
+        return np.sqrt(eps2_minus)
+    
+    #DM-SM INTERACTIONS
+    def cross_idm_b(self):
+        return self.th.cross_idm_b
+    
+    def flag_pD_p(self):
+        return self.th.flag_pD_p
+    
+    def flag_pD_e(self):
+        return self.th.flag_pD_e
+    
+    def flag_eD_p(self):
+        return self.th.flag_eD_p
+    
+    def flag_eD_e(self):
+        return self.th.flag_eD_e
+    
+    def ratio_idm_b(self):
+        return self.th.ratio_idm_b
     #END TWIN SECTOR 
     def k_eq(self):
         self.compute(["background"])
@@ -1854,6 +1999,8 @@ cdef class Class:
                 value = self.ba.Omega0_ncdm_tot*self.ba.h*self.ba.h*93.14
             elif name == 'Neff':
                 value = self.ba.Neff
+            elif name == 'N_ur':
+                value = self.ba.Neff
             #BEGIN #TWIN SECTOR 
             elif name =='Neff_bbn':
                 value = self.ba.Neff_bbn
@@ -1873,10 +2020,16 @@ cdef class Class:
                 value = self.th.tau_d_twin
             elif name == 'z_d_twin':
                 value = self.th.z_d_twin
-            elif name == 'ds_d_twin':
-                value = self.th.ds_d_twin  
             elif name == 'rs_d_twin':
                 value = self.th.rs_d_twin
+            elif name == 'ds_d_twin':
+                value = self.th.ds_d_twin  
+            elif name == 'z_d_twin_estimate':
+                value = self.th.z_d_twin_estimate
+            elif name == 'x_e_twin_asympt':
+                value = self.x_e_twin_asympt()
+            elif name == 'epsilon_millicharge':
+                value = self.epsilon_millicharge()
             #END TWIN SECTOR
             elif name == 'Omega_m':
                 value = self.ba.Omega0_m
@@ -1888,8 +2041,16 @@ cdef class Class:
                 value = self.ba.Omega0_idr/self.ba.Omega0_g*8./7.*pow(11./4.,4./3.)
             elif name == 'Gamma_0_nadm':
                 value = self.th.a_idm_dr*(4./3.)*(self.ba.h*self.ba.h*self.ba.Omega0_idr)
+            elif name == 'a_idm_dr':
+                value = self.th.a_idm_dr
             elif name == 'a_dark':
                 value = self.th.a_idm_dr
+            elif name == 'w0_fld':
+                value = self.ba.w0_fld
+            elif name == 'wa_fld':
+                value = self.ba.wa_fld
+            elif name == 'cs2_fld':
+                value = self.ba.cs2_fld
             elif name == 'tau_reio':
                 value = self.th.tau_reio
             elif name == 'z_reio':
@@ -2012,7 +2173,7 @@ cdef class Class:
                 value = self.sd.sd_parameter_table[1]
             elif name == 'mu_sd':
                 value = self.sd.sd_parameter_table[2]
-            # BEGIN #TWIN SECTOR 
+            #BEGIN #TWIN SECTOR 
             elif name == 'r_all_twin':
                 value = self.ba.r_all_twin
             elif name == 'm_p_dark':
@@ -2025,7 +2186,28 @@ cdef class Class:
                 value = self.ba.Delta_N_twin
             elif name == 'xi_twin':
                 value = self.ba.xi_twin
-            #END TWIN SECTOR 
+            elif name == 'nindex_idm_dr':
+                value = self.th.nindex_idm_dr
+            #DM-SM INTERACTIONS
+            elif name == 'cross_idm_b':
+                value = self.th.cross_idm_b
+            elif name == 'log10_cross_idm_b':
+                value = np.log10(self.th.cross_idm_b)
+            elif name == 'ratio_idm_b':
+                value = self.th.ratio_idm_b
+            elif name == 'log10_ratio_idm_b':
+                value = np.log10(self.th.ratio_idm_b)
+            elif name == 'flag_pD_p':
+                value = self.th.flag_pD_p
+            elif name == 'flag_pD_e':
+                value = self.th.flag_pD_e
+            elif name == 'flag_eD_p':
+                value = self.th.flag_eD_p
+            elif name == 'flag_eD_e':
+                value = self.th.flag_eD_e
+            elif name == 'n_index_idm_b':
+                value = self.th.n_index_idm_b
+            #END TWIN SECTOR
             else:
                 raise CosmoSevereError("%s was not recognized as a derived parameter" % name)
             derived[name] = value

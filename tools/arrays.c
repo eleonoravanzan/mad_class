@@ -3573,3 +3573,47 @@ int array_hunt_ascending(
 
   return _SUCCESS_;
 }
+
+/**
+ * Assuming that array is a vector with elements arranged in ascending
+ * order, find i such that array[i] < value < array[i+1].
+ */
+
+int array_find_nearest_ascending(
+                                  double * array,
+                                  int size,
+                                  double value,
+                                  int * index,
+                                  ErrorMsg errmsg
+                                  ) {
+  int i_inf,i_sup,i_mid;
+
+  i_inf=0;
+  i_sup=size-1;
+
+  /* checks */
+  if (array[i_inf] > array[i_sup]) {
+    sprintf(errmsg,"%s(L:%d) array is not in ascending order (checked only the boundaries)",__func__,__LINE__);
+    return _FAILURE_;
+  }
+  if ((value < array[i_inf]) || (value > array[i_sup])) {
+    sprintf(errmsg,"%s(L:%d) %e is outside the range [%e, %e]",__func__,__LINE__,value,array[0],array[size-1]);
+    return _FAILURE_;
+  }
+
+  /* bisection */
+  while (i_sup-i_inf>1) {
+    i_mid = (i_sup+i_inf)/2;
+    if (value >= array[i_mid]) {
+      i_inf=i_mid;
+    }
+    else {
+      i_sup=i_mid;
+    }
+  }
+
+  /* result */
+  *index = i_inf;
+
+  return _SUCCESS_;
+}

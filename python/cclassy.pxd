@@ -66,6 +66,8 @@ cdef extern from "class.h":
         int index_bg_D
         int index_bg_f
         int index_bg_Omega_m
+        int index_bg_rho_b
+        int index_bg_rho_b_twin
         short  has_ncdm
         double T_cmb
         double h
@@ -113,6 +115,8 @@ cdef extern from "class.h":
         int th_size
         int index_th_xe
         int index_th_Tb
+        int index_th_Tb_twin
+        int index_th_xe_twin
         double tau_reio
         double z_reio
         double z_rec
@@ -136,7 +140,7 @@ cdef extern from "class.h":
         double a_idm_dr
         double b_idr
         double nindex_idm_dr
-        double m_idm
+        double m_idm_dr
         double z_rec_twin
         double tau_rec_twin
         double rs_rec_twin
@@ -145,8 +149,17 @@ cdef extern from "class.h":
         double da_rec_twin
         double tau_d_twin
         double z_d_twin
-        double ds_d_twin
         double rs_d_twin
+        double ds_d_twin
+        double z_d_twin_estimate
+        double YHe_twin
+        double cross_idm_b
+        int flag_pD_p
+        int flag_pD_e
+        int flag_eD_p
+        int flag_eD_e
+        int n_index_idm_b
+        double ratio_idm_b
         
         int tt_size
 

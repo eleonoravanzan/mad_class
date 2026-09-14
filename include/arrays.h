@@ -500,6 +500,13 @@ int array_integrate_all_trapzd_or_spline(
                            double value,
                            int * index,
                            ErrorMsg errmsg);
+	
+	int array_find_nearest_ascending(
+                           			 double * array,
+                           			 int size,
+                           			 double value,
+                           			 int * index,
+                           			 ErrorMsg errmsg);
 
 #ifdef __cplusplus
 }

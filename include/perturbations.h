@@ -111,50 +111,50 @@ struct perturbations
   short has_vectors; /**< do we need vectors? */
   short has_tensors; /**< do we need tensors? */
 
-  short has_ad;      /**< do we need adiabatic mode? */
-  short has_bi;      /**< do we need isocurvature bi mode? */
-  short has_cdi;     /**< do we need isocurvature cdi mode? */
-  short has_nid;     /**< do we need isocurvature nid mode? */
-  short has_niv;     /**< do we need isocurvature niv mode? */
+  short has_ad;  /**< do we need adiabatic mode? */
+  short has_bi;  /**< do we need isocurvature bi mode? */
+  short has_cdi; /**< do we need isocurvature cdi mode? */
+  short has_nid; /**< do we need isocurvature nid mode? */
+  short has_niv; /**< do we need isocurvature niv mode? */
 
   /* perturbed recombination */
   /** Do we want to consider perturbed temperature and ionization fraction? */
   short has_perturbed_recombination;
   /** Neutrino contribution to tensors */
-  enum tensor_methods tensor_method;  /**< way to treat neutrinos in tensor perturbations(neglect, approximate as massless, take exact equations) */
+  enum tensor_methods tensor_method; /**< way to treat neutrinos in tensor perturbations(neglect, approximate as massless, take exact equations) */
 
-  short evolve_tensor_ur;             /**< will we evolve ur tensor perturbations (either because we have ur species, or we have ncdm species with massless approximation) ? */
-  short evolve_tensor_ncdm;             /**< will we evolve ncdm tensor perturbations (if we have ncdm species and we use the exact method) ? */
+  short evolve_tensor_ur;   /**< will we evolve ur tensor perturbations (either because we have ur species, or we have ncdm species with massless approximation) ? */
+  short evolve_tensor_ncdm; /**< will we evolve ncdm tensor perturbations (if we have ncdm species and we use the exact method) ? */
 
-  short has_cl_cmb_temperature;       /**< do we need \f$ C_l \f$'s for CMB temperature? */
-  short has_cl_cmb_polarization;      /**< do we need \f$ C_l \f$'s for CMB polarization? */
-  short has_cl_cmb_lensing_potential; /**< do we need \f$ C_l \f$'s for CMB lensing potential? */
-  short has_cl_lensing_potential;     /**< do we need \f$ C_l \f$'s for galaxy lensing potential? */
-  short has_cl_number_count;          /**< do we need \f$ C_l \f$'s for density number count? */
-  short has_pk_matter;                /**< do we need matter Fourier spectrum? */
-  short has_density_transfers;        /**< do we need to output individual matter density transfer functions? */
-  short has_velocity_transfers;       /**< do we need to output individual matter velocity transfer functions? */
-  short has_metricpotential_transfers;/**< do we need to output individual transfer functions for scalar metric perturbations? */
-  short has_Nbody_gauge_transfers;    /**< should we convert density and velocity transfer functions to Nbody gauge? */
+  short has_cl_cmb_temperature;        /**< do we need \f$ C_l \f$'s for CMB temperature? */
+  short has_cl_cmb_polarization;       /**< do we need \f$ C_l \f$'s for CMB polarization? */
+  short has_cl_cmb_lensing_potential;  /**< do we need \f$ C_l \f$'s for CMB lensing potential? */
+  short has_cl_lensing_potential;      /**< do we need \f$ C_l \f$'s for galaxy lensing potential? */
+  short has_cl_number_count;           /**< do we need \f$ C_l \f$'s for density number count? */
+  short has_pk_matter;                 /**< do we need matter Fourier spectrum? */
+  short has_density_transfers;         /**< do we need to output individual matter density transfer functions? */
+  short has_velocity_transfers;        /**< do we need to output individual matter velocity transfer functions? */
+  short has_metricpotential_transfers; /**< do we need to output individual transfer functions for scalar metric perturbations? */
+  short has_Nbody_gauge_transfers;     /**< should we convert density and velocity transfer functions to Nbody gauge? */
 
   short has_nl_corrections_based_on_delta_m;  /**< do we want to compute non-linear corrections with an algorithm relying on delta_m (like halofit)? */
 
-  short has_nc_density;  /**< in dCl, do we want density terms ? */
-  short has_nc_rsd;      /**< in dCl, do we want redshift space distortion terms ? */
-  short has_nc_lens;     /**< in dCl, do we want lensing terms ? */
-  short has_nc_gr;       /**< in dCl, do we want gravity terms ? */
+  short has_nc_density; /**< in dCl, do we want density terms ? */
+  short has_nc_rsd;     /**< in dCl, do we want redshift space distortion terms ? */
+  short has_nc_lens;    /**< in dCl, do we want lensing terms ? */
+  short has_nc_gr;      /**< in dCl, do we want gravity terms ? */
 
   int l_scalar_max; /**< maximum l value for CMB scalars \f$ C_l \f$'s */
   int l_vector_max; /**< maximum l value for CMB vectors \f$ C_l \f$'s */
   int l_tensor_max; /**< maximum l value for CMB tensors \f$ C_l \f$'s */
-  int l_lss_max; /**< maximum l value for LSS \f$ C_l \f$'s (density and lensing potential in  bins) */
+  int l_lss_max;    /**< maximum l value for LSS \f$ C_l \f$'s (density and lensing potential in  bins) */
   double k_max_for_pk; /**< maximum value of k in 1/Mpc in P(k) (if \f$ C_l \f$'s also requested, overseeded by value kmax inferred from l_scalar_max if it is bigger) */
 
-  int selection_num;                            /**< number of selection functions
-                                                   (i.e. bins) for matter density \f$ C_l \f$'s */
-  enum selection_type selection;                /**< type of selection functions */
-  double selection_mean[_SELECTION_NUM_MAX_]; /**< centers of selection functions */
-  double selection_width[_SELECTION_NUM_MAX_];  /**< widths of selection functions */
+  int selection_num;                           /**< number of selection functions
+                                                  (i.e. bins) for matter density \f$ C_l \f$'s */
+  enum selection_type selection;               /**< type of selection functions */
+  double selection_mean[_SELECTION_NUM_MAX_];  /**< centers of selection functions */
+  double selection_width[_SELECTION_NUM_MAX_]; /**< widths of selection functions */
 
   int switch_sw;   /**< in temperature calculation, do we want to include the intrinsic temperature + Sachs Wolfe term? */
   int switch_eisw; /**< in temperature calculation, do we want to include the early integrated Sachs Wolfe term? */
@@ -163,17 +163,17 @@ struct perturbations
   int switch_pol;  /**< in temperature calculation, do we want to include the polarization-related term? */
   double eisw_lisw_split_z; /**< at which redshift do we define the cut between eisw and lisw ?*/
 
-  int store_perturbations;  /**< Do we want to store perturbations? */
-  int k_output_values_num;       /**< Number of perturbation outputs (default=0) */
-  double k_output_values[_MAX_NUMBER_OF_K_FILES_];    /**< List of k values where perturbation output is requested. */
+  int store_perturbations; /**< Do we want to store perturbations? */
+  int k_output_values_num; /**< Number of perturbation outputs (default=0) */
+  double k_output_values[_MAX_NUMBER_OF_K_FILES_]; /**< List of k values where perturbation output is requested. */
 
-  double three_ceff2_ur;/**< 3 x effective squared sound speed for the ultrarelativistic perturbations */
-  double three_cvis2_ur;/**< 3 x effective viscosity parameter for the ultrarelativistic perturbations */
+  double three_ceff2_ur; /**< 3 x effective squared sound speed for the ultrarelativistic perturbations */
+  double three_cvis2_ur; /**< 3 x effective viscosity parameter for the ultrarelativistic perturbations */
 
   double z_max_pk; /**< when we compute only the matter spectrum / transfer functions, but not the CMB, we are sometimes interested to sample source functions at very high redshift, way before recombination. This z_max_pk will then fix the initial sampling time of the sources. */
 
   double * alpha_idm_dr; /**< Angular contribution to collisional term at l>=2 for idm_fr-idr */
-  double * beta_idr;  /**< Angular contribution to collisional term at l>=2 for idr-idr */
+  double * beta_idr;     /**< Angular contribution to collisional term at l>=2 for idr-idr */
 
   int idr_nature; /**< Nature of the interacting dark radiation (free streaming or fluid) */
 
@@ -212,9 +212,9 @@ struct perturbations
 
   //@{
 
-  int index_ic_ad; /**< index value for adiabatic */
+  int index_ic_ad;  /**< index value for adiabatic */
   int index_ic_cdi; /**< index value for CDM isocurvature */
-  int index_ic_bi; /**< index value for baryon isocurvature */
+  int index_ic_bi;  /**< index value for baryon isocurvature */
   int index_ic_nid; /**< index value for neutrino density isocurvature */
   int index_ic_niv; /**< index value for neutrino velocity isocurvature */
   int index_ic_ten; /**< index value for unique possibility for tensors */
@@ -227,72 +227,72 @@ struct perturbations
 
   //@{
 
-  short has_source_t;          /**< do we need source for CMB temperature? */
-  short has_source_p;          /**< do we need source for CMB polarization? */
-  short has_source_delta_m;    /**< do we need source for delta of total matter? */
-  short has_source_delta_cb;   /**< do we ALSO need source for delta of ONLY cdm and baryon? */
-  short has_source_delta_tot;  /**< do we need source for delta total? */
-  short has_source_delta_g;    /**< do we need source for delta of gammas? */
-  short has_source_delta_b;    /**< do we need source for delta of baryons? */
-  short has_source_delta_cdm;  /**< do we need source for delta of cold dark matter? */
-  short has_source_delta_idr;   /**< do we need source for delta of interacting dark radiation? */
-  short has_source_delta_idm_dr;/**< do we need source for delta of interacting dark matter (with dr)? */
-  short has_source_delta_dcdm;  /**< do we need source for delta of DCDM? */
-  short has_source_delta_fld;  /**< do we need source for delta of dark energy? */
-  short has_source_delta_scf;  /**< do we need source for delta from scalar field? */
-  short has_source_delta_dr;   /**< do we need source for delta of decay radiation? */
-  short has_source_delta_ur;   /**< do we need source for delta of ultra-relativistic neutrinos/relics? */
-  short has_source_delta_ncdm; /**< do we need source for delta of all non-cold dark matter species (e.g. massive neutrinos)? */
-  short has_source_theta_m;    /**< do we need source for theta of total matter? */
-  short has_source_theta_cb;   /**< do we ALSO need source for theta of ONLY cdm and baryon? */
-  short has_source_theta_tot;  /**< do we need source for theta total? */
-  short has_source_theta_g;    /**< do we need source for theta of gammas? */
-  short has_source_theta_b;    /**< do we need source for theta of baryons? */
-  short has_source_theta_cdm;  /**< do we need source for theta of cold dark matter? */
-  short has_source_theta_idr;  /**< do we need source for theta of interacting dark radiation? */
+  short has_source_t;            /**< do we need source for CMB temperature? */
+  short has_source_p;            /**< do we need source for CMB polarization? */
+  short has_source_delta_m;      /**< do we need source for delta of total matter? */
+  short has_source_delta_cb;     /**< do we ALSO need source for delta of ONLY cdm and baryon? */
+  short has_source_delta_tot;    /**< do we need source for delta total? */
+  short has_source_delta_g;      /**< do we need source for delta of gammas? */
+  short has_source_delta_b;      /**< do we need source for delta of baryons? */
+  short has_source_delta_cdm;    /**< do we need source for delta of cold dark matter? */
+  short has_source_delta_idr;    /**< do we need source for delta of interacting dark radiation? */
+  short has_source_delta_idm_dr; /**< do we need source for delta of interacting dark matter (with dr)? */
+  short has_source_delta_dcdm;   /**< do we need source for delta of DCDM? */
+  short has_source_delta_fld;    /**< do we need source for delta of dark energy? */
+  short has_source_delta_scf;    /**< do we need source for delta from scalar field? */
+  short has_source_delta_dr;     /**< do we need source for delta of decay radiation? */
+  short has_source_delta_ur;     /**< do we need source for delta of ultra-relativistic neutrinos/relics? */
+  short has_source_delta_ncdm;   /**< do we need source for delta of all non-cold dark matter species (e.g. massive neutrinos)? */
+  short has_source_theta_m;      /**< do we need source for theta of total matter? */
+  short has_source_theta_cb;     /**< do we ALSO need source for theta of ONLY cdm and baryon? */
+  short has_source_theta_tot;    /**< do we need source for theta total? */
+  short has_source_theta_g;      /**< do we need source for theta of gammas? */
+  short has_source_theta_b;      /**< do we need source for theta of baryons? */
+  short has_source_theta_cdm;    /**< do we need source for theta of cold dark matter? */
+  short has_source_theta_idr;    /**< do we need source for theta of interacting dark radiation? */
   short has_source_theta_idm_dr; /**< do we need source for theta of interacting dark matter (with dr)? */
-  short has_source_theta_dcdm; /**< do we need source for theta of DCDM? */
-  short has_source_theta_fld;  /**< do we need source for theta of dark energy? */
-  short has_source_theta_scf;  /**< do we need source for theta of scalar field? */
-  short has_source_theta_dr;   /**< do we need source for theta of ultra-relativistic neutrinos/relics? */
-  short has_source_theta_ur;   /**< do we need source for theta of ultra-relativistic neutrinos/relics? */
-  short has_source_theta_ncdm; /**< do we need source for theta of all non-cold dark matter species (e.g. massive neutrinos)? */
-  short has_source_phi;        /**< do we need source for metric fluctuation phi? */
-  short has_source_phi_prime;  /**< do we need source for metric fluctuation phi'? */
+  short has_source_theta_dcdm;   /**< do we need source for theta of DCDM? */
+  short has_source_theta_fld;    /**< do we need source for theta of dark energy? */
+  short has_source_theta_scf;    /**< do we need source for theta of scalar field? */
+  short has_source_theta_dr;     /**< do we need source for theta of ultra-relativistic neutrinos/relics? */
+  short has_source_theta_ur;     /**< do we need source for theta of ultra-relativistic neutrinos/relics? */
+  short has_source_theta_ncdm;   /**< do we need source for theta of all non-cold dark matter species (e.g. massive neutrinos)? */
+  short has_source_phi;          /**< do we need source for metric fluctuation phi? */
+  short has_source_phi_prime;    /**< do we need source for metric fluctuation phi'? */
   short has_source_phi_plus_psi; /**< do we need source for metric fluctuation (phi+psi)? */
-  short has_source_psi;        /**< do we need source for metric fluctuation psi? */
-  short has_source_h;          /**< do we need source for metric fluctuation h? */
-  short has_source_h_prime;    /**< do we need source for metric fluctuation h'? */
-  short has_source_eta;        /**< do we need source for metric fluctuation eta? */
-  short has_source_eta_prime;  /**< do we need source for metric fluctuation eta'? */
+  short has_source_psi;          /**< do we need source for metric fluctuation psi? */
+  short has_source_h;            /**< do we need source for metric fluctuation h? */
+  short has_source_h_prime;      /**< do we need source for metric fluctuation h'? */
+  short has_source_eta;          /**< do we need source for metric fluctuation eta? */
+  short has_source_eta_prime;    /**< do we need source for metric fluctuation eta'? */
   short has_source_H_T_Nb_prime; /**< do we need source for metric fluctuation H_T_Nb'? */
-  short has_source_k2gamma_Nb; /**< do we need source for metric fluctuation gamma in Nbody gauge? */
+  short has_source_k2gamma_Nb;   /**< do we need source for metric fluctuation gamma in Nbody gauge? */
 
 
   /* remember that the temperature source function includes three
      terms that we call 0,1,2 (since the strategy in class v > 1.7 is
      to avoid the integration by part that would reduce the source to
      a single term) */
-  int index_tp_t0; /**< index value for temperature (j=0 term) */
-  int index_tp_t1; /**< index value for temperature (j=1 term) */
-  int index_tp_t2; /**< index value for temperature (j=2 term) */
-  int index_tp_p; /**< index value for polarization */
-  int index_tp_delta_m; /**< index value for matter density fluctuation */
-  int index_tp_delta_cb; /**< index value for delta cb */
-  int index_tp_delta_tot; /**< index value for total density fluctuation */
-  int index_tp_delta_g;   /**< index value for delta of gammas */
-  int index_tp_delta_b;   /**< index value for delta of baryons */
-  int index_tp_delta_cdm; /**< index value for delta of cold dark matter */
-  int index_tp_delta_dcdm;/**< index value for delta of DCDM */
-  int index_tp_delta_fld;  /**< index value for delta of dark energy */
-  int index_tp_delta_scf;  /**< index value for delta of scalar field */
-  int index_tp_delta_dr; /**< index value for delta of decay radiation */
-  int index_tp_delta_ur; /**< index value for delta of ultra-relativistic neutrinos/relics */
-  int index_tp_delta_idr; /**< index value for delta of interacting dark radiation */
-  int index_tp_delta_idm_dr;/**< index value for delta of interacting dark matter (with dr)*/
-  int index_tp_delta_ncdm1; /**< index value for delta of first non-cold dark matter species (e.g. massive neutrinos) */
-  int index_tp_perturbed_recombination_delta_temp;		/**< Gas temperature perturbation */
-  int index_tp_perturbed_recombination_delta_chi;		/**< Inionization fraction perturbation */
+  int index_tp_t0;                                 /**< index value for temperature (j=0 term) */
+  int index_tp_t1;                                 /**< index value for temperature (j=1 term) */
+  int index_tp_t2;                                 /**< index value for temperature (j=2 term) */
+  int index_tp_p;                                  /**< index value for polarization */
+  int index_tp_delta_m;                            /**< index value for matter density fluctuation */
+  int index_tp_delta_cb;                           /**< index value for delta cb */
+  int index_tp_delta_tot;                          /**< index value for total density fluctuation */
+  int index_tp_delta_g;                            /**< index value for delta of gammas */
+  int index_tp_delta_b;                            /**< index value for delta of baryons */
+  int index_tp_delta_cdm;                          /**< index value for delta of cold dark matter */
+  int index_tp_delta_dcdm;                         /**< index value for delta of DCDM */
+  int index_tp_delta_fld;                          /**< index value for delta of dark energy */
+  int index_tp_delta_scf;                          /**< index value for delta of scalar field */
+  int index_tp_delta_dr;                           /**< index value for delta of decay radiation */
+  int index_tp_delta_ur;                           /**< index value for delta of ultra-relativistic neutrinos/relics */
+  int index_tp_delta_idr;                          /**< index value for delta of interacting dark radiation */
+  int index_tp_delta_idm_dr;                       /**< index value for delta of interacting dark matter (with dr)*/
+  int index_tp_delta_ncdm1;                        /**< index value for delta of first non-cold dark matter species (e.g. massive neutrinos) */
+  int index_tp_perturbed_recombination_delta_temp; /**< Gas temperature perturbation */
+  int index_tp_perturbed_recombination_delta_chi;  /**< Inionization fraction perturbation */
 
   int index_tp_theta_m;     /**< index value for matter velocity fluctuation */
   int index_tp_theta_cb;    /**< index value for theta cb */
@@ -446,39 +446,39 @@ struct perturbations
 
 struct perturbations_vector
 {
-  int index_pt_delta_g;   /**< photon density */
-  int index_pt_theta_g;   /**< photon velocity */
-  int index_pt_shear_g;   /**< photon shear */
-  int index_pt_l3_g;      /**< photon l=3 */
-  int l_max_g;            /**< max momentum in Boltzmann hierarchy (at least 3) */
-  int index_pt_pol0_g;    /**< photon polarization, l=0 */
-  int index_pt_pol1_g;    /**< photon polarization, l=1 */
-  int index_pt_pol2_g;    /**< photon polarization, l=2 */
-  int index_pt_pol3_g;    /**< photon polarization, l=3 */
-  int l_max_pol_g;        /**< max momentum in Boltzmann hierarchy (at least 3) */
-  int index_pt_delta_b;   /**< baryon density */
-  int index_pt_theta_b;   /**< baryon velocity */
-  int index_pt_delta_cdm; /**< cdm density */
-  int index_pt_theta_cdm; /**< cdm velocity */
-  int index_pt_delta_idm_dr;/**< idm_dr density */
-  int index_pt_theta_idm_dr;/**< idm_dr velocity */
-  int index_pt_delta_dcdm; /**< dcdm density */
-  int index_pt_theta_dcdm; /**< dcdm velocity */
-  int index_pt_delta_fld;  /**< dark energy density in true fluid case */
-  int index_pt_theta_fld;  /**< dark energy velocity in true fluid case */
-  int index_pt_Gamma_fld;  /**< unique dark energy dynamical variable in PPF case */
-  int index_pt_phi_scf;  /**< scalar field density */
-  int index_pt_phi_prime_scf;  /**< scalar field velocity */
-  int index_pt_delta_ur; /**< density of ultra-relativistic neutrinos/relics */
-  int index_pt_theta_ur; /**< velocity of ultra-relativistic neutrinos/relics */
-  int index_pt_shear_ur; /**< shear of ultra-relativistic neutrinos/relics */
-  int index_pt_l3_ur;    /**< l=3 of ultra-relativistic neutrinos/relics */
-  int l_max_ur;          /**< max momentum in Boltzmann hierarchy (at least 3) */
-  int index_pt_delta_idr; /**< density of interacting dark radiation */
-  int index_pt_theta_idr; /**< velocity of interacting dark radiation */
-  int index_pt_shear_idr; /**< shear of interacting dark radiation */
-  int index_pt_l3_idr;    /**< l=3 of interacting dark radiation */
-  int l_max_idr;          /**< max momentum in Boltzmann hierarchy (at least 3) for interacting dark radiation */
+  int index_pt_delta_g;       /**< photon density */
+  int index_pt_theta_g;       /**< photon velocity */
+  int index_pt_shear_g;       /**< photon shear */
+  int index_pt_l3_g;          /**< photon l=3 */
+  int l_max_g;                /**< max momentum in Boltzmann hierarchy (at least 3) */
+  int index_pt_pol0_g;        /**< photon polarization, l=0 */
+  int index_pt_pol1_g;        /**< photon polarization, l=1 */
+  int index_pt_pol2_g;        /**< photon polarization, l=2 */
+  int index_pt_pol3_g;        /**< photon polarization, l=3 */
+  int l_max_pol_g;            /**< max momentum in Boltzmann hierarchy (at least 3) */
+  int index_pt_delta_b;       /**< baryon density */
+  int index_pt_theta_b;       /**< baryon velocity */
+  int index_pt_delta_cdm;     /**< cdm density */
+  int index_pt_theta_cdm;     /**< cdm velocity */
+  int index_pt_delta_idm_dr;  /**< idm_dr density */
+  int index_pt_theta_idm_dr;  /**< idm_dr velocity */
+  int index_pt_delta_dcdm;    /**< dcdm density */
+  int index_pt_theta_dcdm;    /**< dcdm velocity */
+  int index_pt_delta_fld;     /**< dark energy density in true fluid case */
+  int index_pt_theta_fld;     /**< dark energy velocity in true fluid case */
+  int index_pt_Gamma_fld;     /**< unique dark energy dynamical variable in PPF case */
+  int index_pt_phi_scf;       /**< scalar field density */
+  int index_pt_phi_prime_scf; /**< scalar field velocity */
+  int index_pt_delta_ur;      /**< density of ultra-relativistic neutrinos/relics */
+  int index_pt_theta_ur;      /**< velocity of ultra-relativistic neutrinos/relics */
+  int index_pt_shear_ur;      /**< shear of ultra-relativistic neutrinos/relics */
+  int index_pt_l3_ur;         /**< l=3 of ultra-relativistic neutrinos/relics */
+  int l_max_ur;               /**< max momentum in Boltzmann hierarchy (at least 3) */
+  int index_pt_delta_idr;     /**< density of interacting dark radiation */
+  int index_pt_theta_idr;     /**< velocity of interacting dark radiation */
+  int index_pt_shear_idr;     /**< shear of interacting dark radiation */
+  int index_pt_l3_idr;        /**< l=3 of interacting dark radiation */
+  int l_max_idr;              /**< max momentum in Boltzmann hierarchy (at least 3) for interacting dark radiation */
 
 /* perturbed recombination */
   int index_pt_perturbed_recombination_delta_temp;		/**< Gas temperature perturbation */
@@ -556,36 +556,39 @@ struct perturbations_workspace
                                  perturbations and their
                                  time-derivatives */
 
-  double delta_rho;		    /**< total density perturbation (gives delta Too) */
-  double rho_plus_p_theta;	/**< total (rho+p)*theta perturbation (gives delta Toi) */
-  double rho_plus_p_shear;	/**< total (rho+p)*shear (gives delta Tij) */
-  double delta_p;		    /**< total pressure perturbation (gives Tii) */
+  double delta_rho;		     /**< total density perturbation (gives delta Too) */
+  double rho_plus_p_theta; /**< total (rho+p)*theta perturbation (gives delta Toi) */
+  double rho_plus_p_shear; /**< total (rho+p)*shear (gives delta Tij) */
+  double delta_p;		       /**< total pressure perturbation (gives Tii) */
 
-  double rho_plus_p_tot;    /**< total (rho+p) (used to infer theta_tot from rho_plus_p_theta) */
+  double rho_plus_p_tot; /**< total (rho+p) (used to infer theta_tot from rho_plus_p_theta) */
 
-  double gw_source;		    /**< stress-energy source term in Einstein's tensor equations (gives Tij[tensor]) */
-  double vector_source_pi;	/**< first stress-energy source term in Einstein's vector equations */
-  double vector_source_v;	/**< second stress-energy source term in Einstein's vector equations */
+  double gw_source;		     /**< stress-energy source term in Einstein's tensor equations (gives Tij[tensor]) */
+  double vector_source_pi; /**< first stress-energy source term in Einstein's vector equations */
+  double vector_source_v;	 /**< second stress-energy source term in Einstein's vector equations */
 
-  double tca_shear_g;  /**< photon shear in tight-coupling approximation */
-  double tca_slip;     /**< photon-baryon slip in tight-coupling approximation */
-  double tca_shear_idm_dr;/**< interacting dark radiation shear in tight coupling appproximation */
-  double rsa_delta_g;  /**< photon density in radiation streaming approximation */
-  double rsa_theta_g;  /**< photon velocity in radiation streaming approximation */
-  double rsa_delta_ur; /**< photon density in radiation streaming approximation */
-  double rsa_theta_ur; /**< photon velocity in radiation streaming approximation */
-  double rsa_delta_idr; /**< interacting dark radiation density in dark radiation streaming approximation */
-  double rsa_theta_idr; /**< interacting dark radiation velocity in dark radiation streaming approximation */
+  double tca_shear_g;      /**< photon shear in tight-coupling approximation */
+  double tca_slip;         /**< photon-baryon slip in tight-coupling approximation */
+  double tca_shear_idm_dr; /**< interacting dark radiation shear in tight coupling appproximation */
+  double rsa_delta_g;      /**< photon density in radiation streaming approximation */
+  double rsa_theta_g;      /**< photon velocity in radiation streaming approximation */
+  double rsa_delta_ur;     /**< photon density in radiation streaming approximation */
+  double rsa_theta_ur;     /**< photon velocity in radiation streaming approximation */
+  double rsa_delta_idr;    /**< interacting dark radiation density in dark radiation streaming approximation */
+  double rsa_theta_idr;    /**< interacting dark radiation velocity in dark radiation streaming approximation */
 
-  double * delta_ncdm;	/**< relative density perturbation of each ncdm species */
-  double * theta_ncdm;	/**< velocity divergence theta of each ncdm species */
-  double * shear_ncdm;	/**< shear for each ncdm species */
+  double * delta_ncdm; /**< relative density perturbation of each ncdm species */
+  double * theta_ncdm; /**< velocity divergence theta of each ncdm species */
+  double * shear_ncdm; /**< shear for each ncdm species */
 
   double delta_m;	/**< relative density perturbation of all non-relativistic species */
   double theta_m;	/**< velocity divergence theta of all non-relativistic species */
 
-  double delta_cb;       /**< relative density perturbation of only cdm and baryon */
-  double theta_cb;       /**< velocity divergence theta of only cdm and baryon */
+  double delta_cb; /**< relative density perturbation of only cdm and baryon */
+  double theta_cb; /**< velocity divergence theta of only cdm and baryon */
+
+  double theta_idm_dr;       /**< interacting dark matter-dark radiation velocity */
+  double theta_idm_dr_prime; /**< derivative of interacting dark matter-dark radiation velocity in regard to conformal time */
 
   double delta_rho_fld;        /**< density perturbation of fluid, not so trivial in PPF scheme */
   double delta_p_fld;          /**< pressure perturbation of fluid, very non-trivial in PPF scheme */
@@ -594,7 +597,7 @@ struct perturbations_workspace
   double Gamma_prime_fld;      /**< Gamma_prime in PPF scheme (equivalent to eq. 14 in 0808.3125) */
 
   FILE * perturbations_output_file; /**< filepointer to output file*/
-  int index_ikout;            /**< index for output k value (when k_output_values is set) */
+  int index_ikout;                  /**< index for output k value (when k_output_values is set) */
 
   //@}
 
@@ -613,15 +616,15 @@ struct perturbations_workspace
 
   //@{
 
-  int index_ap_tca; /**< index for tight-coupling approximation */
-  int index_ap_rsa; /**< index for radiation streaming approximation */
+  int index_ap_tca;        /**< index for tight-coupling approximation */
+  int index_ap_rsa;        /**< index for radiation streaming approximation */
   int index_ap_tca_idm_dr; /**< index for dark tight-coupling approximation (idm-idr) */
-  int index_ap_rsa_idr; /**< index for dark radiation streaming approximation */
-  int index_ap_ufa; /**< index for ur fluid approximation */
-  int index_ap_ncdmfa; /**< index for ncdm fluid approximation */
-  int ap_size;      /**< number of relevant approximations for a given mode */
+  int index_ap_rsa_idr;    /**< index for dark radiation streaming approximation */
+  int index_ap_ufa;        /**< index for ur fluid approximation */
+  int index_ap_ncdmfa;     /**< index for ncdm fluid approximation */
+  int ap_size;             /**< number of relevant approximations for a given mode */
 
-  int * approx;     /**< array of approximation flags holding at a given time: approx[index_ap] */
+  int * approx; /**< array of approximation flags holding at a given time: approx[index_ap] */
 
   //@}
 
@@ -629,8 +632,8 @@ struct perturbations_workspace
 
   //@{
 
-  int max_l_max;    /**< maximum l_max for any multipole */
-  double * s_l;     /**< array of freestreaming coefficients \f$ s_l = \sqrt{1-K*(l^2-1)/k^2} \f$*/
+  int max_l_max; /**< maximum l_max for any multipole */
+  double * s_l;  /**< array of freestreaming coefficients \f$ s_l = \sqrt{1-K*(l^2-1)/k^2} \f$*/
 
   //@}
 
@@ -644,14 +647,14 @@ struct perturbations_workspace
 
 struct perturbations_parameters_and_workspace {
 
-  struct precision * ppr;         /**< pointer to the precision structure */
-  struct background * pba;        /**< pointer to the background structure */
-  struct thermodynamics * pth;            /**< pointer to the thermodynamics structure */
-  struct perturbations * ppt;          /**< pointer to the precision structure */
-  int index_md;                   /**< index of mode (scalar/.../vector/tensor) */
-  int index_ic;			          /**< index of initial condition (adiabatic/isocurvature(s)/...) */
-  int index_k;			          /**< index of wavenumber */
-  double k;			              /**< current value of wavenumber in 1/Mpc */
+  struct precision * ppr;      /**< pointer to the precision structure */
+  struct background * pba;     /**< pointer to the background structure */
+  struct thermodynamics * pth; /**< pointer to the thermodynamics structure */
+  struct perturbations * ppt;  /**< pointer to the precision structure */
+  int index_md;                /**< index of mode (scalar/.../vector/tensor) */
+  int index_ic;			           /**< index of initial condition (adiabatic/isocurvature(s)/...) */
+  int index_k;			           /**< index of wavenumber */
+  double k;			               /**< current value of wavenumber in 1/Mpc */
   struct perturbations_workspace * ppw; /**< workspace defined above */
 
 };

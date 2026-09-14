@@ -2089,6 +2089,9 @@ int input_read_parameters_general(struct file_content * pfc,
     class_test(((flag1 == _TRUE_) && (flag2 == _TRUE_)),
                errmsg,
                "You can only enter one of 'z_reio' or 'tau_reio'.");
+    class_test(flag2 == _TRUE_,
+               errmsg,
+               "This version does not support 'tau_reio' as input, because the reionization-by-tau routine is not compatible with the twin-sector approximation scheme. Please give 'z_reio' instead.");
     /* Complete set of parameters */
     if (flag1 == _TRUE_){
       pth->z_reio=param1;
@@ -2844,10 +2847,10 @@ int input_read_parameters_species(struct file_content * pfc,
         pba->xi_twin = param3;
         pba->Delta_N_twin = (8/7.)*pow(11./4.,4./3.) * pow(pba->xi_twin,4.);
       }
-     /* Temp FLAG1 */
+    /* Temp FLAG1 */
     //printf("In input: r=%g,DeltaN=%g,mp=%g,me=%g,alpha=%g\n",pba->r_all_twin,pba->Delta_N_twin,pba->m_p_dark,pba->m_e_dark,pba->alphafs_dark);
 
- /*April 26: We don't need the ratio_vev_twin, but we'll define it as m_e_dark/m_e later so we can still use it in all the places where it's useful. Generalize and remove later 
+/*April 26: We don't need the ratio_vev_twin, but we'll define it as m_e_dark/m_e later so we can still use it in all the places where it's useful. Generalize and remove later 
   class_call(parser_read_double(pfc,"ratio_vev_twin",&param1,&flag1,errmsg),
               errmsg,
               errmsg);
@@ -2862,6 +2865,7 @@ int input_read_parameters_species(struct file_content * pfc,
     /* If any one of the twin parameters is zero, the code completely ignores the twin sector. Changed April 26 to be consistent with new parameters */
     if(((pba->r_all_twin != 0.) || (pba->Delta_N_twin != 0.)||(pba->m_p_dark !=0.)||(pba->m_e_dark !=0.) || (pba->alphafs_dark !=0.)) && (pba->r_all_twin)*(pba->Delta_N_twin)*(pba->m_p_dark)*(pba->m_e_dark)*(pba->alphafs_dark)==0.){
           printf("-->[Twin Warning:] All the input parameters for the dark sector should be non-zero in .ini file.\n   Completely ignoring the dark sector!\n");
+          printf("r_all_twin = %le, Delta_N_twin = %le, alphafs_dark = %le, m_p_dark = %le, m_e_dark = %le\n",pba->r_all_twin,pba->Delta_N_twin,pba->alphafs_dark,pba->m_p_dark,pba->m_e_dark);
           pba->r_all_twin = 0.;
           pba->Delta_N_twin = 0.;
           pba->m_p_dark=0.;
@@ -3092,6 +3096,69 @@ int input_read_parameters_species(struct file_content * pfc,
 
   if (has_m_budget == _TRUE_) {
     pba->Omega0_cdm = Omega_m_remaining;
+  }
+
+  /** 7.2.3) Dark Matter interacting with baryons */
+
+    /** 7.2.3.a) idm_b coupling stregth */
+    class_call(parser_read_double(pfc,"cross_idm_b",&param1,&flag1,errmsg),
+                errmsg,
+                errmsg);
+    class_call(parser_read_double(pfc,"log10_cross_idm_b",&param2,&flag2,errmsg),
+                errmsg,
+                errmsg);
+    class_call(parser_read_double(pfc,"log10_ratio_idm_b",&param3,&flag3,errmsg),
+                errmsg,
+                errmsg);
+    class_test(class_at_least_two_of_three(flag1,flag2,flag3),
+               errmsg,
+               "You can only enter one of 'cross_idm_b', 'log10_cross_idm_b' or 'log10_ratio_idm_b'.");
+    /* Complete set of parameters */
+    if (flag1 == _TRUE_){
+      class_test((param1 < 0.),
+                  errmsg,
+                  "The DM-SM cross section must be > 0, you asked for cross_idm_b=%e",param1);
+      pth->cross_idm_b = param1;
+      pth->ratio_idm_b = -1;
+    }
+    else if (flag2 == _TRUE_){
+      pth->cross_idm_b = pow(10,param2);
+      pth->ratio_idm_b = -1;
+    }
+    else if (flag3 == _TRUE_){
+      pth->ratio_idm_b = pow(10,param3);
+      pth->cross_idm_b = -1;
+    }
+    if (pth->cross_idm_b > 0 || pth->ratio_idm_b > 0) {
+      class_test(pba->r_all_twin == 0.,
+                 errmsg,
+                 "DM-SM scattering ('cross_idm_b', 'log10_cross_idm_b' or 'log10_ratio_idm_b') requires the twin sector: set r_all_twin > 0.");
+    }
+
+    /** 7.2.3.b) idm_b temperature dependence */
+    /* Read */
+    if (pth->cross_idm_b > 0 || pth->ratio_idm_b > 0) {
+      class_read_int("n_index_idm_b",pth->n_index_idm_b);
+
+      class_read_int("flag_pD_p",pth->flag_pD_p);
+      class_read_int("flag_pD_e",pth->flag_pD_e);
+      class_read_int("flag_eD_p",pth->flag_eD_p);
+      class_read_int("flag_eD_e",pth->flag_eD_e);
+
+      /* Consistency checks */
+      class_test((pth->n_index_idm_b != -4),
+                 errmsg,
+                 "The index for the DM-baryon interaction must be -4, you passed n_index_idm_b = %d.", pth->n_index_idm_b);
+      /* The following formula is taken from Dvorkin et al. (2013) */
+      pth->n_coeff_idm_b = (pow(2.,(pth->n_index_idm_b+5.)/2.)*tgamma(3.+pth->n_index_idm_b/2.))/(3.*sqrt(_PI_));
+      // positive for n=-4, 1/3 * sqrt(2/PI)
+    }
+  
+  /* We enforce the tight coupling approximation to be first order whenever idm interacts with baryons */
+  if ((pth->cross_idm_b > 0 || pth->ratio_idm_b > 0) && (ppr->tight_coupling_approximation != (int)first_order_CLASS)) {
+    if (ppt->perturbations_verbose > 0)
+      printf("Warning: Setting the tight_coupling_approximation = first_order_CLASS, since you selected idm-b!\n");
+    ppr->tight_coupling_approximation = first_order_CLASS;
   }
 
   /* ** ADDITIONAL SPECIES ** */
@@ -5697,6 +5764,7 @@ int input_default_params(struct background *pba,
   pba->tau_dcdm = 0.0;
 
   /* ** ADDITIONAL SPECIES ** --> Add your species here */
+
   /** START #TWIN SECTOR */
   /** TWIN background default */
   pba->r_all_twin = 0.;
@@ -5704,12 +5772,12 @@ int input_default_params(struct background *pba,
   pba->ratio_vev_twin = 0.;
 
   /** TWIN background derived default */
+  /* HERE! This is outdated, see comment on April 26 that removed neutrino physics and substituted 7.4 -> 4.4 */
   pba->Omega0_b_twin = pba->r_all_twin*pba->Omega0_cdm;
   pba->T0_twin = pba->T_cmb*pow(pba->Delta_N_twin/7.4,1./4.);
   pba->T0_ur_twin = pow(4./11.,1./3.)*pba->T0_twin;
   pba->Omega0_g_twin = pow(pba->T0_twin/pba->T_cmb,4.)*pba->Omega0_g;
   pba->Omega0_ur_twin = 7./8.*3*pow(pba->T0_ur_twin/pba->T_cmb,4.)*pba->Omega0_g;
-
   /** END TWIN SECTOR */
 
   /** 7.2) Interacting Dark Matter */
@@ -5728,6 +5796,19 @@ int input_default_params(struct background *pba,
   /** 7.2.g, 7.2.h) */
   ppt->alpha_idm_dr = NULL;
   ppt->beta_idr = NULL;
+
+  /* DM-SM interactions. */
+  pth->has_idm_b = 0; // default to no interactions
+  /** 7.2.3.a) idm_b coupling */
+  pth->cross_idm_b = 0.;
+  pth->ratio_idm_b = 0.;
+  pth->flag_pD_p = 1;
+  pth->flag_pD_e = 1;
+  pth->flag_eD_p = 1;
+  pth->flag_eD_e = 1;
+  /** 7.2.3.b) temperature scaling idm_b */
+  pth->n_index_idm_b = 0.;
+  pth->n_coeff_idm_b = 0.;
 
   /* ** ADDITIONAL SPECIES ** */
 

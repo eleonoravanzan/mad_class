@@ -157,6 +157,7 @@ struct background
   int flag10_twin;
   int flag11_twin;
   int flag12_twin;
+  int flag13_twin;
 
    
   /** END TWIN SECTOR */
@@ -255,7 +256,7 @@ struct background
   /** START #TWIN SECTOR */
   /* TWIN: Indices in Normal format*/
   int index_bg_rho_g_twin;         /**< mirror photon density */
-  int index_bg_rho_ur_twin;         /**< mirror relativistic neutrinos density */
+  int index_bg_rho_ur_twin;        /**< mirror relativistic neutrinos density */
   int index_bg_rho_b_twin;         /**< mirror baryon density */
   /* TWIN: Indices in long format*/
   int index_bg_rs_twin;            /**< comoving sound horizon in Mpc (Twin) */

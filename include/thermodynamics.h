@@ -83,6 +83,10 @@ struct thermodynamics
 
   short compute_damping_scale; /**< do we want to compute the simplest analytic approximation to the photon damping (or diffusion) scale? */
 
+  /** parameters for interacting dark matter */
+
+  short has_idm_b;
+
   /** parameters for reio_camb */
 
   double reionization_width; /**< width of H reionization */
@@ -226,7 +230,7 @@ struct thermodynamics
   int index_th_Tb_twin;         /**< baryon temperature \f$ T_b \f$ */
   int index_th_wb_twin;         /**< baryon equation of state parameter \f$ w_b \f$ */
   int index_th_cb2_twin;        /**< squared baryon adiabatic sound speed \f$ c_b^2 \f$ */
-  int index_th_dkappa_twin; /**< Thomson scattering rate \f$ d \kappa / d \tau \f$ (units 1/Mpc) */
+  int index_th_dkappa_twin;     /**< Thomson scattering rate \f$ d \kappa / d \tau \f$ (units 1/Mpc) */
   int index_th_tau_d_twin;         /**< Baryon drag optical depth */
   int index_th_ddkappa_twin;       /**< scattering rate derivative \f$ d^2 \kappa / d \tau^2 \f$ */
   int index_th_dddkappa_twin;      /**< scattering rate second derivative \f$ d^3 \kappa / d \tau^3 \f$ */
@@ -249,7 +253,27 @@ struct thermodynamics
   double CB1_He2_twin;
   double x_e_Lalpha;
   double CT_twin;    
-   /** END TWIN SECTOR */
+  /** END TWIN SECTOR */
+
+  /* DM-SM interactions. */
+
+  int index_th_R_idm_b;       /**< idm_b interaction coefficient */
+  int index_th_R_idm_b_pp;    /**<       p_D - p */
+  int index_th_R_idm_b_pe;    /**<       p_D - e */
+  int index_th_R_idm_b_ep;    /**<       e_D - p */
+  int index_th_R_idm_b_ee;    /**<       e_D - e */
+
+  int index_th_dR_idm_b;      /**< derivative of idm_b interaction coefficient wrt conformal time */
+  int index_th_dR_idm_b_pp;   /**<       p_D - p */
+  int index_th_dR_idm_b_pe;   /**<       p_D - e */
+  int index_th_dR_idm_b_ep;   /**<       e_D - p */
+  int index_th_dR_idm_b_ee;   /**<       e_D - e */
+  
+  int index_th_ddR_idm_b;     /**< second derivative of ibm_b interaction coefficient wrt conformal time */
+  int index_th_ddR_idm_b_pp;  /**<       p_D - p */
+  int index_th_ddR_idm_b_pe;  /**<       p_D - e */
+  int index_th_ddR_idm_b_ep;  /**<       e_D - p */
+  int index_th_ddR_idm_b_ee;  /**<       e_D - e */
 
   //@}
 
@@ -333,9 +357,11 @@ struct thermodynamics
   double da_rec_twin;  /**< physical angular diameter distance to recombination */
 
   double tau_d_twin; /**< twin baryon drag time **/
-  double z_d_twin;  /**<twin baryon drag redshift **/
-  double ds_d_twin; /**< physical sound horizon at twin baryon drag */
-  double rs_d_twin; /**< comoving sound horizon at twin baryond drag */
+  double z_d_twin;   /**<twin baryon drag redshift **/
+  double ds_d_twin;  /**< physical sound horizon at twin baryon drag */
+  double rs_d_twin;  /**< comoving sound horizon at twin baryond drag */
+  
+  double z_d_twin_estimate; /**< with DM-SM interactions, redshift used to compute the ratio between DM-SM and DM-DR interaction rates */
     
   double angular_rescaling_twin; /**< [ratio ra_rec / (tau0-tau_rec)]: gives CMB rescaling in angular space relative to flat model (=1 for curvature K=0) */
   double tau_free_streaming_twin;     /**< minimum value of tau at which free-streaming approximation can be switched on */
@@ -343,6 +369,26 @@ struct thermodynamics
   int index_tau_twin; /* index of tau_free_streaming_twin */
   /** END TWIN SECTOR */
 
+  /** @name - parameters needed for interacting DM-baryons */
+
+  //@{
+  
+  double cross_idm_b;    /**< cross section between interacting dark matter and baryons */
+  double ratio_idm_b;    /**< ratio of interaction rates appearing in the twin matter temperature evolution equation
+                              (DM-SM interaction rate / DM-DR interaction rate) evaluated at dark decoupling
+                              as estimated with Newton's algorithm */
+  int n_index_idm_b;     /**< temperature dependence of the interactions between dark matter and baryons */
+  int flag_pD_p;         /**< switch on/off individual interactions */
+  int flag_pD_e;
+  int flag_eD_p;
+  int flag_eD_e;
+  double cross_pp;       /**< rescaled cross sections */
+  double cross_pe;
+  double cross_ep;
+  double cross_ee;
+  double n_coeff_idm_b;  /**< numerical n-dependent coefficient for idm_b */
+
+  //@}
 
   /**
    *@name - some flags needed for thermodynamics functions
@@ -391,6 +437,8 @@ struct thermo_vector {
   int index_ti_x_H_twin;     /**< index for twin hydrogen fraction in y */
   int index_ti_x_He_twin;    /**< index for twin helium fraction in y */
   int index_ti_D_Tmat_twin;  /**< index for T_mat_twin - T_photon_twin [Kelvin] in y */
+  /* DM-SM interactions */
+  int index_ti_D_Tmat_twin_idmb;  /**< index for T_mat_twin - T_mat [Kelvin] in y */
   /* END TWIN SECTOR */ 
 
   double * y;           /**< vector of quantities to be integrated */
@@ -452,8 +500,10 @@ struct thermo_diffeq_workspace {
   int index_ap_He2_twin;  /**< beginning of 2nd twin He-recombination (HeII) */
   int index_ap_H_twin;    /**< beginning of twin H-recombination (HI) */
   int index_ap_frec_twin; /**< during and after full twin H- and twin HeII-recombination, up to beginning of SM helium recombination */
-    
-  int ap_current_twin;     /** current approximation scheme index */
+  int index_ap_late_twin; /**< during and after full twin H-. TEMP March 24, used for extremely high dark recombination z so that step size isn't too small in ODE solver. **/
+  
+  int ap_current_twin;     /**< current approximation scheme index */
+  int ap_latest_switch;    /**< which sector switched latest (0 for SM, 1 for twin) */
   int ap_size_twin;        /**< number of approximation intervals used during evolver loop */
   int ap_size_loaded_twin; /**< number of all approximations  */
   double * ap_z_limits_twin;       /**< vector storing ending limits of each approximation */
@@ -467,6 +517,18 @@ struct thermo_diffeq_workspace {
   double A2s_tab[200]; /* List of values of photorecombination coefficient for 2s state, with Tm=Tr */
   double A2s_ToB_tab[200]; /* List of values of T_R/B_D that A2s is evaluated at */
   /* END TWIN SECTOR */
+
+  /* DM-SM interactions. */
+  double R_idm_b;       /**< idm_b interaction coefficient */
+  double R_idm_b_pp;
+  double R_idm_b_pe;
+  double R_idm_b_ep;
+  double R_idm_b_ee;
+  
+  double c2_idm;        /**< sound speed for idm_g \f$ c_{idm-g}^2  \f$*/
+  double dmu_idm_dr;    /**< scattering rate of idr with idm_g_dr (i.e. idr opacity to idm_g_dr scattering) (units 1/Mpc) */
+  double dmu_idr;       /**< idr self-interaction rate */
+  double Sinv_idm_dr;   /**< ratio of idm and idr densities */
     
   struct thermo_vector * ptv;       /**< pointer to vector of integrated quantities and their time-derivatives */
   struct thermohyrec * phyrec;     /**< pointer to wrapper of HyRec structure */
@@ -544,11 +606,11 @@ struct thermo_workspace {
   double SIunit_nH0_twin;
   double Tnow_twin;
   /* Most important and useful constants */
-  double const_NR_numberdens_twin;  /**< prefactor in number density of nonrelativistic twin species */
-  double const_Tion_H_twin;         /**< ionization energy for twin HI as temperature */
-  double const_Tion_HeI_twin;       /**< ionization energy for twin HeI as temperature */
-  double const_Tion_HeII_twin;      /**< ionization energy for twin HeII as temperature */
-  double z_decoupling_estimate;  /** Estimate of the redshift of dark decoupling, used to define approx switch. **/
+  double const_NR_numberdens_twin;   /**< prefactor in number density of nonrelativistic twin species */
+  double const_Tion_H_twin;          /**< ionization energy for twin HI as temperature */
+  double const_Tion_HeI_twin;        /**< ionization energy for twin HeI as temperature */
+  double const_Tion_HeII_twin;       /**< ionization energy for twin HeII as temperature */
+  double z_decoupling_estimate;      /** Estimate of the redshift of dark decoupling, used to define approx switch. **/
   double z_H_twin_boltzmann_trigger; /**< Redshift where twin hydrogen should start being evolved with Boltzmann equation **/
   double z_H_twin_saha_trigger;      /**< Redshift where twin hydrogen should start being evolved with Sahaequation **/
   double z_He1_twin_trigger;         /**< Redshift where twin HeII->HeI should start being evolved with Saha equation **/
@@ -561,11 +623,11 @@ struct thermo_workspace {
     
   double Tmat_decoupled_reference_twin;
   double z_decoupled_reference_twin;
+
   /* END TWIN SECTOR */
     
   /* START #TWIN SECTOR */
-  short nodarkrecomb_twin;  
-    
+  short nodarkrecomb_twin;
   /* END TWIN SECTOR */  
   
   struct thermo_diffeq_workspace * ptdw;        /**< pointer to workspace for differential equations */
@@ -653,6 +715,7 @@ extern "C" {
                                                     struct background * pba,
                                                     struct thermodynamics* pth,
                                                     double* pvecback);
+                                                  
 
   int thermodynamics_output_summary(struct background* pba,
                                     struct thermodynamics* pth);
@@ -858,13 +921,14 @@ extern "C" {
 /** START #TWIN SECTOR: April 26 redefined sigma-twin and m_H_twin for adm. */
 #define _mu_twin_ (pba->m_e_dark*_GeV_over_kg_*pba->m_p_dark*_GeV_over_kg_)/((pba->m_e_dark*_GeV_over_kg_) + (pba->m_p_dark*_GeV_over_kg_)) /** Dark reduced mass */
 #define _m_H_twin (pba->m_e_dark*_GeV_over_kg_ + pba->m_p_dark*_GeV_over_kg_ -0.5 * _mu_twin_ * pba->alphafs_dark * pba->alphafs_dark) /** Dark H mass*/
-#define _m_e_twin (_m_e_*pba->ratio_vev_twin) /** Twin electron mass*/
+#define _m_e_twin (pba->m_e_dark*_GeV_over_kg_) /** GREG CHECK Changed Jan 15 2025 (_m_e_*pba->ratio_vev_twin)**/ /** Twin electron mass*/
+#define _m_p_twin (pba->m_p_dark*_GeV_over_kg_) /** GREG CHECK Added Jan 17 2025 **/
 #define _epsilon0_perm_ 8.8541878128e-12 /** Vacuum Permittivity*/
-#define _sigma_twin  (_sigma_*(pba->alphafs_dark/0.00729735)*(pba->alphafs_dark/0.00729735)/pow(pba->ratio_vev_twin,2)) /**< Twin Thomson cross-section in m^2 */
+#define _sigma_twin  (_sigma_*(pba->alphafs_dark/0.00729735)*(pba->alphafs_dark/0.00729735)*(1.0/pow(_m_e_twin/_m_e_,2) + 1.0/pow(_m_p_twin/_m_e_,2)))  /** pow(pba->ratio_vev_twin,2)) GREG CHECK Changed Jan 15 2025 to include both electron and proton scattering. Could also use reduced mass here, it's equivalent.**//**< Twin Thomson cross-section in m^2 */
 #define _Z_REC_MIN_twin 0.1 /* CHECK */
 #define _L_H_ion_twin (1.096787737e7*(_mu_twin_/_m_e_)*(pba->alphafs_dark/0.00729735)*(pba->alphafs_dark/0.00729735))
-#define _L_He1_ion_twin (1.98310772e7*pba->ratio_vev_twin*(pba->alphafs_dark/0.00729735)*(pba->alphafs_dark/0.00729735))
-#define _L_He2_ion_twin (4.389088863e7*pba->ratio_vev_twin*(pba->alphafs_dark/0.00729735)*(pba->alphafs_dark/0.00729735))
+#define _L_He1_ion_twin (1.98310772e7*(_mu_twin_/_m_e_)*(pba->alphafs_dark/0.00729735)*(pba->alphafs_dark/0.00729735)) /**Changed Jan 15 2025 as well to use reduced mass. **/
+#define _L_He2_ion_twin (4.389088863e7*(_mu_twin_/_m_e_)*(pba->alphafs_dark/0.00729735)*(pba->alphafs_dark/0.00729735))
 /** END TWIN SECTOR */
 
 #endif
