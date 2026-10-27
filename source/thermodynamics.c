@@ -1478,7 +1478,7 @@ int thermodynamics_workspace_init(
       rhs_saha_upper = exp(1.5*log(ptw->const_NR_numberdens_twin*T_dec_upper/(T_dec_upper/ptw->Tnow_twin)/(T_dec_upper/ptw->Tnow_twin)) - ptw->const_Tion_H_twin/T_dec_upper)/ptw->SIunit_nH0_twin;
       x_saha_upper = 2./(1. + sqrt(1 + 4./rhs_saha_upper));//x_e under saha assumption, at T_dec. 
       /* GREG CHECK Change Jan 20 2025: Same change in prefactor as above. */
-      compton_hubble_diff_upper = (1 + (pba->m_e_dark/pba->m_p_dark))*( 2. * _sigma_twin/_m_e_twin/_c_ ) * ( 4./3. * pba->Omega0_g_twin * pow(pba->H0,2) * 2 * pow(T_dec_upper/ptw->Tnow_twin,4) * _Jm3_over_Mpc2_ ) * x_saha_upper / (1. + x_saha_upper) -  safety_factor * ptw->SIunit_H0*(sqrt(pba->Omega0_r)*pow(T_dec_upper/ptw->Tnow_twin,2) + sqrt(pba->Omega0_m)*pow(T_dec_upper/ptw->Tnow_twin,1.5)); 
+      compton_hubble_diff_upper = (1. + pow(pba->m_e_dark/pba->m_p_dark, 3))*( 2. * _sigma_twin/_m_e_twin/_c_ ) * ( 4./3. * pba->Omega0_g_twin * pow(pba->H0,2) * 2 * pow(T_dec_upper/ptw->Tnow_twin,4) * _Jm3_over_Mpc2_ ) * x_saha_upper / (1. + x_saha_upper) -  safety_factor * ptw->SIunit_H0*(sqrt(pba->Omega0_r)*pow(T_dec_upper/ptw->Tnow_twin,2) + sqrt(pba->Omega0_m)*pow(T_dec_upper/ptw->Tnow_twin,1.5)); 
     }
   
     while ((T_dec_upper - T_dec_lower)/T_dec_upper > decoupling_tol) {
@@ -1490,7 +1490,7 @@ int thermodynamics_workspace_init(
       //Multiply hubble by an arbitrary factor to get the 'start' of decoupling - since x_twin goes down more quickly in saha, once decoupling starts and x_twin starts freezing out, the compton/Hubble ratio actually decreases more slowly than the 
       //equilibrium approximation would suggest. 
       /*GREG CHECK Change Jan 20 2025: Same change in prefactor as above */
-      compton_hubble_diff_mid = (1 + (pba->m_e_dark/pba->m_p_dark))*( 2. * _sigma_twin/_m_e_twin/_c_ ) * ( 4./3. * pba->Omega0_g_twin * pow(pba->H0,2) * 2 * pow(T_dec_mid/ptw->Tnow_twin,4) * _Jm3_over_Mpc2_ ) * x_saha / (1. + x_saha) -  safety_factor * ptw->SIunit_H0*(sqrt(pba->Omega0_r)*pow(T_dec_mid/ptw->Tnow_twin,2) + sqrt(pba->Omega0_m)*pow(T_dec_mid/ptw->Tnow_twin,1.5));   
+      compton_hubble_diff_mid = (1. + pow(pba->m_e_dark/pba->m_p_dark, 3))*( 2. * _sigma_twin/_m_e_twin/_c_ ) * ( 4./3. * pba->Omega0_g_twin * pow(pba->H0,2) * 2 * pow(T_dec_mid/ptw->Tnow_twin,4) * _Jm3_over_Mpc2_ ) * x_saha / (1. + x_saha) -  safety_factor * ptw->SIunit_H0*(sqrt(pba->Omega0_r)*pow(T_dec_mid/ptw->Tnow_twin,2) + sqrt(pba->Omega0_m)*pow(T_dec_mid/ptw->Tnow_twin,1.5));   
 
       /** GREG CHECK Change Jan 17 2025: Commenting out/removing compton_mid and hubble_mid, since they were only used for debugging purposes **/
       /*compton_mid = (1 + pow((pba->m_e_dark/pba->m_p_dark),3))*( 2. * _sigma_twin/_m_e_twin/_c_ ) * ( 4./3. * pba->Omega0_g_twin * pow(pba->H0,2) * 2 * pow(T_dec_mid/ptw->Tnow_twin,4) * _Jm3_over_Mpc2_ ) * x_saha / (1. + x_saha);*/
@@ -1605,13 +1605,13 @@ int thermodynamics_workspace_init(
       
       if (pth->ratio_idm_b < 0) {
         pth->ratio_idm_b = pth->cross_idm_b * pow(mu_pp,2.) * pth->n_coeff_idm_b * (3.e-4*pow(_c_,4.)/(8.*_PI_*_Mpc_over_m_*_G_*_eV_)) / _Jm3_over_Mpc2_
-          * (pba->Omega0_b / pba->Omega0_g_twin) * (1.-pth->YHe) * x_e_dec_twin * 3. * _m_e_twin * _c_ / (4. * m_H * _sigma_twin * (1 + (pba->m_e_dark/pba->m_p_dark)) )
+          * (pba->Omega0_b / pba->Omega0_g_twin) * (1.-pth->YHe) * x_e_dec_twin * 3. * _m_e_twin * _c_ / (4. * m_H * _sigma_twin * (1. + pow(pba->m_e_dark/pba->m_p_dark, 3)) )
           * pow(1.+pth->z_d_twin_estimate,-5./2.) * sum_BD * _c_ / _Mpc_over_m_;
       }
 
       else if (pth->cross_idm_b < 0) {
         pth->cross_idm_b = pth->ratio_idm_b / (pow(mu_pp,2.) * pth->n_coeff_idm_b * (3.e-4*pow(_c_,4.)/(8.*_PI_*_Mpc_over_m_*_G_*_eV_)) / _Jm3_over_Mpc2_
-          * (pba->Omega0_b / pba->Omega0_g_twin) * (1.-pth->YHe) * x_e_dec_twin * 3. * _m_e_twin * _c_ / (4. * m_H * _sigma_twin * (1 + (pba->m_e_dark/pba->m_p_dark)) )
+          * (pba->Omega0_b / pba->Omega0_g_twin) * (1.-pth->YHe) * x_e_dec_twin * 3. * _m_e_twin * _c_ / (4. * m_H * _sigma_twin * (1. + pow(pba->m_e_dark/pba->m_p_dark, 3)) )
           * pow(1.+pth->z_d_twin_estimate,-5./2.) * sum_BD * _c_ / _Mpc_over_m_);
         
         pth->cross_pp = pth->cross_idm_b*pth->flag_pD_p;
@@ -4151,7 +4151,7 @@ int thermodynamics_derivs(
     }
 
     /* GREG CHECK Change Jan 20 2025: Replace prefactor (me/mp)^3 with just (me/mp), since the proton contribution to Compton scattering is now included in sigma_twin. Still need one factor of me/mp from that electron mass though. */
-    rate_gamma_b_twin = (1 + (pba->m_e_dark/pba->m_p_dark))*( 2. * _sigma_twin/_m_e_twin/_c_ ) * ( 4./3. * pvecback[pba->index_bg_rho_g_twin] * _Jm3_over_Mpc2_ ) * x_twin / (1.+x_twin+ptw->fHe_twin);
+    rate_gamma_b_twin = (1. + pow(pba->m_e_dark/pba->m_p_dark, 3))*( 2. * _sigma_twin/_m_e_twin/_c_ ) * ( 4./3. * pvecback[pba->index_bg_rho_g_twin] * _Jm3_over_Mpc2_ ) * x_twin / (1.+x_twin+ptw->fHe_twin);
 
     if (pth->has_varconst == _TRUE_) {
       rate_gamma_b_twin *= rescale_rate;
