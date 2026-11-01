@@ -1,120 +1,83 @@
-CLASS: Cosmic Linear Anisotropy Solving System  {#mainpage}
-==============================================
+# CLASS MAD: Millicharged Atomic Dark Matter in CLASS
 
-Authors: Julien Lesgourgues, Thomas Tram, Nils Schoeneberg
+[![arXiv](https://img.shields.io/badge/arXiv-2610.40064-b31b1b.svg)](https://arxiv.org/abs/2610.40064)
 
-with several major inputs from other people, especially Benjamin
-Audren, Simon Prunet, Jesus Torrado, Miguel Zumalacarregui, Francesco
-Montanari, Deanna Hooper, Samuel Brieden, Daniel Meinert, Matteo Lucca, etc.
+This is a modified version of the Boltzmann code [CLASS](http://class-code.net),
+built on top of [CLASS ADM](https://github.com/jp-barron/class_adm-3.1)
+by Jared Barron and collaborators. CLASS ADM adds a "twin" dark sector made of
+atomic dark matter (a dark proton, a dark electron and a dark photon) with its
+own recombination history. CLASS MAD extends it with elastic scattering between
+the dark sector particles and Standard Model baryons, as arises for instance
+from a dark-photon kinetic mixing (millicharged atomic dark matter).
 
-For download and information, see http://class-code.net
+The Standard Model part of the code is unchanged with respect to CLASS
+version 3.1.1 and is documented in the original [README](README_CLASS.md) and on the
+[CLASS wiki](https://github.com/lesgourg/class_public/wiki).
 
+## What is new with respect to CLASS ADM
 
-Compiling CLASS and getting started
------------------------------------
+- Momentum and heat exchange between dark protons, dark electrons and SM
+  protons and electrons, with a velocity-dependent cross section (index n = -4),
+  in both the thermodynamics and the perturbation modules.
+- A tight-coupling treatment of the baryon–dark-matter drag that remains
+  numerically stable when the drag rate is large, following the approach of
+  the `dmeff`(https://github.com/kboddy/class_public/tree/dmeff) branch of CLASS.
+- Derived quantities exposed through the Python wrapper, including the
+  inferred dark-matter millicharge.
 
-(the information below can also be found on the webpage, just below
-the download button)
+## Installation
 
-Download the code from the webpage and unpack the archive (tar -zxvf
-class_vx.y.z.tar.gz), or clone it from
-https://github.com/lesgourg/class_public. Go to the class directory
-(cd class/ or class_public/ or class_vx.y.z/) and compile (make clean;
-make class). You can usually speed up compilation with the option -j:
-make -j class. If the first compilation attempt fails, you may need to
-open the Makefile and adapt the name of the compiler (default: gcc),
-of the optimization flag (default: -O4 -ffast-math) and of the OpenMP
-flag (default: -fopenmp; this flag is facultative, you are free to
-compile without OpenMP if you don't want parallel execution; note that
-you need the version 4.2 or higher of gcc to be able to compile with
--fopenmp). Many more details on the CLASS compilation are given on the
-wiki page
+Same as CLASS. See the original README for compilers and the Python wrapper.
+The `tau_reio` input is not supported in this version; use `z_reio` instead.
 
-https://github.com/lesgourg/class_public/wiki/Installation
+## New input parameters
 
-(in particular, for compiling on Mac >= 10.9 despite of the clang
-incompatibility with OpenMP).
+The full list, with comments and default values, is in
+[`explanatory_mad.ini`](explanatory_mad.ini). In short:
 
-To check that the code runs, type:
+Twin sector (inherited from CLASS ADM):
 
-    ./class explanatory.ini
+| parameter | meaning |
+|---|---|
+| `r_all_twin` | fraction of the dark matter that is atomic dark matter (0 to 1) |
+| `Delta_N_twin` | contribution of the dark radiation to N_eff |
+| `m_p_dark`, `m_e_dark` | dark proton and dark electron masses in GeV |
+| `alphafs_dark` | dark fine-structure constant |
+| `YHe_twin` | dark helium mass fraction |
 
-The explanatory.ini file is THE reference input file, containing and
-explaining the use of all possible input parameters. We recommend to
-read it, to keep it unchanged (for future reference), and to create
-for your own purposes some shorter input files, containing only the
-input lines which are useful for you. Input files must have a *.ini
-extension. We provide an example of an input file containing a
-selection of the most used parameters, default.ini, that you may use as a
-starting point.
+Dark-matter–baryon scattering (new):
 
-If you want to play with the precision/speed of the code, you can use
-one of the provided precision files (e.g. cl_permille.pre) or modify
-one of them, and run with two input files, for instance:
+| parameter | meaning |
+|---|---|
+| `cross_idm_b` | dark-proton–proton cross section in cm^2; the other channels scale with the reduced masses |
+| `log10_cross_idm_b` | same, as log10 |
+| `log10_ratio_idm_b` | alternative: log10 of the ratio between the DM–SM heat-exchange rate and the dark Compton heating rate at dark thermal decoupling (ℛ in the paper); the cross section is inferred from it. The analysis in the paper uses ℛ < 10⁻³. |
+| `flag_pD_p`, `flag_pD_e`, `flag_eD_p`, `flag_eD_e` | switch each of the four scattering channels on (1) or off (0); default all on |
+| `n_index_idm_b` | velocity-dependence index of the cross section; only -4 is implemented |
 
-    ./class test.ini cl_permille.pre
+Only one of `cross_idm_b`, `log10_cross_idm_b` and `log10_ratio_idm_b` may be
+given. Scattering requires the twin sector to be on (`r_all_twin > 0`).
 
-The files *.pre are suppposed to specify the precision parameters for
-which you don't want to keep default values. If you find it more
-convenient, you can pass these precision parameter values in your *.ini
-file instead of an additional *.pre file.
+## Citing
 
-The automatically-generated documentation is located in
+This code accompanies the paper
 
-    doc/manual/html/index.html
-    doc/manual/CLASS_manual.pdf
+> E. Vanzan, K. K. Boddy, E. D. Kovetz,
+> *At the EDGES of MADness: phenomenology of relic millicharged atomic dark matter*,
+> [arXiv:2610.40064](https://arxiv.org/abs/2610.40064).
 
-On top of that, if you wish to modify the code, you will find lots of
-comments directly in the files.
+If you use CLASS MAD, please cite it together with the CLASS ADM paper
+(Bansal, Barron, Curtin, Tsai, [arXiv:2212.02487](https://arxiv.org/abs/2212.02487))
+and CLASS itself (Blas, Lesgourgues, Tram, *CLASS II*,
+[arXiv:1104.2933](https://arxiv.org/abs/1104.2933)).
 
-Python
-------
-
-To use CLASS from python, or ipython notebooks, or from the Monte
-Python parameter extraction code, you need to compile not only the
-code, but also its python wrapper. This can be done by typing just
-'make' instead of 'make class' (or for speeding up: 'make -j'). More
-details on the wrapper and its compilation are found on the wiki page
-
-https://github.com/lesgourg/class_public/wiki
-
-Plotting utility
-----------------
-
-Since version 2.3, the package includes an improved plotting script
-called CPU.py (Class Plotting Utility), written by Benjamin Audren and
-Jesus Torrado. It can plot the Cl's, the P(k) or any other CLASS
-output, for one or several models, as well as their ratio or percentage
-difference. The syntax and list of available options is obtained by
-typing 'pyhton CPU.py -h'. There is a similar script for MATLAB,
-written by Thomas Tram. To use it, once in MATLAB, type 'help
-plot_CLASS_output.m'
-
-Developing the code
---------------------
-
-If you want to develop the code, we suggest that you download it from
-the github webpage
-
-https://github.com/lesgourg/class_public
-
-rather than from class-code.net. Then you will enjoy all the feature
-of git repositories. You can even develop your own branch and get it
-merged to the public distribution. For related instructions, check
-
-https://github.com/lesgourg/class_public/wiki/Public-Contributing
-
-Using the code
---------------
-
-You can use CLASS freely, provided that in your publications, you cite
-at least the paper `CLASS II: Approximation schemes <http://arxiv.org/abs/1104.2933>`. Feel free to cite more CLASS papers!
-
-Support
--------
-
-To get support, please open a new issue on the
-
-https://github.com/lesgourg/class_public
-
-webpage!
+```bibtex
+@article{Vanzan:2026yov,
+    author        = "Vanzan, Eleonora and Boddy, Kimberly K. and Kovetz, Ely D.",
+    title         = "{At the EDGES of MADness: phenomenology of relic millicharged atomic dark matter}",
+    eprint        = "2610.40064",
+    archivePrefix = "arXiv",
+    primaryClass  = "astro-ph.CO",
+    year          = "2026"
+}
+```
